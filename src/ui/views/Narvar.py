@@ -1,62 +1,88 @@
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 
-class SidebarApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Interfaz con Barra de Navegación")
-        self.root.geometry("600x400")
-        
-        # Colores y estilos
-        self.bg_color = "#2c3e50"
-        self.fg_color = "#ecf0f1"
-        self.btn_color = "#34495e"
-        self.hover_color = "#1abc9c"
-        
-        # Frame de la barra lateral
-        self.sidebar_width = 200
-        self.sidebar = tk.Frame(root, bg=self.bg_color, width=self.sidebar_width, height=400)
-        self.sidebar.place(x=-self.sidebar_width, y=0)
-        
-        # Botón para mostrar/ocultar barra lateral
-        self.toggle_btn = tk.Button(root, text="☰", font=("Arial", 14), bg=self.btn_color, fg=self.fg_color, 
-                                    command=self.toggle_sidebar, relief="flat")
-        self.toggle_btn.place(x=10, y=10)
-        
-        # Botones de navegación
-        self.create_nav_buttons()
-        
-        self.sidebar_visible = False
-        
-    def create_nav_buttons(self):
-        buttons = ["Inicio", "Perfil", "Configuración", "Salir"]
-        for i, text in enumerate(buttons):
-            btn = tk.Button(self.sidebar, text=text, font=("Arial", 12), bg=self.btn_color, fg=self.fg_color,
-                            activebackground=self.hover_color, relief="flat", width=20, command=lambda t=text: self.on_nav_click(t))
-            btn.pack(pady=10)
-    
-    def on_nav_click(self, text):
-        print(f"Navegando a {text}")
-    
-    def toggle_sidebar(self):
-        if self.sidebar_visible:
-            self.hide_sidebar()
-        else:
-            self.show_sidebar()
-    
-    def show_sidebar(self):
-        for x in range(-self.sidebar_width, 0, 20):
-            self.sidebar.place(x=x, y=0)
-            self.root.update()
-        self.sidebar_visible = True
-    
-    def hide_sidebar(self):
-        for x in range(0, -self.sidebar_width, -20):
-            self.sidebar.place(x=x, y=0)
-            self.root.update()
-        self.sidebar_visible = False
+# Configuración inicial de CustomTkinter
+ctk.set_appearance_mode("light")  # Modo claro
+ctk.set_default_color_theme("blue")  # Tema azul
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = SidebarApp(root)
-    root.mainloop()
+# Variables globales para controlar la animación
+is_animating = False  # Evita que se solapen múltiples animaciones
+target_x = 0  # Posición objetivo de la barra
+
+# Función para ocultar/mostrar la barra de navegación con animación
+def toggle_navbar():
+    global target_x, is_animating
+
+    if is_animating:
+        return  # Evita que se inicie una nueva animación si ya hay una en curso
+
+    current_x = navbar.winfo_x()
+    target_x = -200 if current_x >= 0 else 0  # Alternar entre -200 (oculto) y 0 (visible)
+    animate_navbar(current_x, target_x)
+
+# Función para animar la barra de navegación
+def animate_navbar(current_x, target_x):
+    global is_animating
+
+    step = -10 if target_x < current_x else 10  # Paso de animación
+    new_x = current_x + step
+
+    # Limita la posición para que no exceda el objetivo
+    if (step > 0 and new_x > target_x) or (step < 0 and new_x < target_x):
+        new_x = target_x
+
+    navbar.place(x=new_x, y=0, relheight=1)  # Mueve la barra a la nueva posición
+    content.place(x=new_x + 200, y=0, relwidth=1, relheight=1)  # Ajusta el contenido principal
+
+    # Si no hemos alcanzado la posición objetivo, continuar la animación
+    if new_x != target_x:
+        is_animating = True
+        root.after(10, animate_navbar, new_x, target_x)
+    else:
+        is_animating = False  # La animación ha terminado
+
+# Crear la ventana principal
+root = ctk.CTk()
+root.title("Sistema Hidropónico")
+root.geometry("1000x600")
+
+# Crear un frame para la barra de navegación
+navbar = ctk.CTkFrame(root, width=200, fg_color="sky blue", corner_radius=0)
+navbar.place(x=0, y=0, relheight=1)  # Posición inicial de la barra
+
+# Frame para el título
+title_frame = ctk.CTkFrame(navbar, fg_color="sky blue", corner_radius=0)
+title_frame.pack(fill="x", pady=20, padx=10)  # Aumentamos el padding superior
+
+# Título de la barra de navegación
+title_label = ctk.CTkLabel(title_frame, text="Sistema Hidropónico", font=("Arial", 16, "bold"), 
+                           text_color="white", fg_color="sky blue")
+title_label.pack(side="left", padx=20)
+
+# Opciones de la barra de navegación
+options = ["Estado del sistema", "Sensores", "Control de actuadores", "Historial de datos", "Configuración"]
+for option in options:
+    button = ctk.CTkButton(navbar, text=option, fg_color="sky blue", hover_color="deep sky blue", 
+                           font=("Arial", 14), corner_radius=5, width=180, height=40, anchor="w")  # Botones más grandes y alineados a la izquierda
+    button.pack(pady=8, padx=10)  # Más espacio entre botones
+
+# Frame para el contenido principal
+content = ctk.CTkFrame(root, fg_color="white")
+content.place(x=200, y=0, relwidth=1, relheight=1)  # Ajuste para el contenido
+
+# Botón para desocultar la barra (siempre visible)
+show_navbar_button = ctk.CTkButton(
+    root, 
+    text="☰",  # Ícono de tres líneas horizontales
+    command=toggle_navbar, 
+    width=30, 
+    height=30, 
+    fg_color="white",  # Fondo blanco
+    hover_color="#f0f0f0",  # Color de hover gris claro
+    text_color="black",  # Ícono en negro
+    font=("Arial", 16),  # Tamaño del ícono
+    corner_radius=5
+)
+show_navbar_button.place(x=10, y=10)  # Posición en la esquina superior izquierda
+
+# Iniciar el bucle principal de la aplicación
+root.mainloop()
