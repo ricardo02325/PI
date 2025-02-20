@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+# Comentario
 # Configuración inicial de CustomTkinter
 ctk.set_appearance_mode("light")  # Modo claro
 ctk.set_default_color_theme("blue")  # Tema azul
