@@ -31,7 +31,7 @@ def obtener_datos():
     
     df = pd.DataFrame(datos)
     if df.empty:
-        print("⚠️ No hay datos para graficar.")
+        print("No hay datos para graficar.")
         return None
 
     df['fecha_hora'] = pd.to_datetime(df['fecha_hora'])
@@ -46,7 +46,7 @@ def actualizar_grafica(frame):
     df = df.sort_values(by='fecha_hora')
     ax.plot(df['fecha_hora'], df['valor'], label="Conductividad Eléctrica", color='green', linewidth=2)
     
-    ax.set_title('📊 Conductividad Eléctrica', fontsize=16, fontweight='bold')
+    ax.set_title('Conductividad Eléctrica', fontsize=16, fontweight='bold')
     ax.set_xlabel('Fecha y Hora', fontsize=14)
     ax.set_ylabel('Valor (mS/cm)', fontsize=14)
     ax.legend(fontsize=12, loc='upper left')

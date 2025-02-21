@@ -35,7 +35,7 @@ def obtener_datos():
     df = pd.DataFrame(datos)
 
     if df.empty:
-        print("⚠️ No hay datos para graficar.")
+        print("No hay datos para graficar.")
         return None
 
     df['fecha_hora'] = pd.to_datetime(df['fecha_hora'])
@@ -68,7 +68,7 @@ def actualizar_grafica(frame):
            
             ax.scatter(sensor_data['fecha_hora'], sensor_data['valor'], c=colores_puntos, edgecolors='black', s=50, zorder=3)
 
-    ax.set_title('📊 Lecturas de Sensores en Sistema Hidropónico', fontsize=16, fontweight='bold')
+    ax.set_title('Lecturas de Sensores en Sistema Hidropónico', fontsize=16, fontweight='bold')
     ax.set_xlabel('Fecha y Hora', fontsize=14)
     ax.set_ylabel('Valor de la Lectura', fontsize=14)
     ax.legend(title='Sensores', title_fontsize='13', fontsize='12', loc='upper left')
