@@ -1,15 +1,24 @@
-import tkinter as tk
+import sys
+import customtkinter as ctk
 import mysql.connector
+
+# Agregar la ruta al directorio raíz del proyecto (donde está 'config')
+sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')  # Ajusta la ruta a la raíz del proyecto
+
+# Ahora importa la configuración de la base de datos
+from config.db.config import DB_CONFIG
 
 def crear_tabla(ventana, datos):
     fuente = ("Arial", 12)
-    color_fondo_celda = "white"
     color_fondo_ventana = "#f0f0f0"
     color_fondo_encabezado = "#40E0D0"
-    borde_celda = 1
-    color_borde = "white"
+    color_borde = "#000000"  # Color del borde
+    borde_ancho = 2  # Grosor del borde
 
     ventana.configure(bg=color_fondo_ventana)
+
+    marco_tabla = ctk.CTkFrame(ventana, fg_color="transparent")
+    marco_tabla.pack(padx=10, pady=10, fill="both", expand=True)
 
     for i, fila in enumerate(datos):
         for j, valor in enumerate(fila):
@@ -20,32 +29,34 @@ def crear_tabla(ventana, datos):
                 fuente_celda = fuente
                 color_fondo_celda = "white"
 
-            etiqueta = tk.Label(
-                ventana,
+            # Crear marco de celda con borde
+            celda_marco = ctk.CTkFrame(marco_tabla, border_width=borde_ancho, border_color=color_borde)
+            celda_marco.grid(row=i, column=j, sticky="nsew")
+
+            etiqueta = ctk.CTkLabel(
+                celda_marco,
                 text=valor,
-                borderwidth=borde_celda,
-                relief="solid",
-                bg=color_fondo_celda,
+                fg_color=color_fondo_celda,
                 font=fuente_celda,
-                anchor="w",
+                corner_radius=0,
                 padx=5,
-                pady=2,
-                highlightbackground=color_borde,
-                highlightcolor=color_borde,
+                pady=2
             )
-            etiqueta.grid(row=i, column=j, padx=0, pady=0, sticky="ew")
+            etiqueta.pack(fill="both", expand=True)
 
-            ventana.grid_columnconfigure(j, weight=1)
+            # Permitir que las columnas se expandan
+            marco_tabla.grid_columnconfigure(j, weight=1)
 
-    ventana.geometry("600x300")
+    ventana.geometry("700x400")
 
 
 def obtener_datos_db():
+    # Usar la configuración de la base de datos desde DB_CONFIG
     conexion = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="sistema_hidroponico",
+        host=DB_CONFIG["host"],
+        user=DB_CONFIG["user"],
+        password=DB_CONFIG["password"],
+        database=DB_CONFIG["database"],
     )
 
     cursor = conexion.cursor()
@@ -58,7 +69,10 @@ def obtener_datos_db():
     return datos
 
 
-ventana = tk.Tk()
+ctk.set_appearance_mode("light")  # "dark" para modo oscuro
+ctk.set_default_color_theme("blue")
+
+ventana = ctk.CTk()
 ventana.title("Historial de Sensores")
 
 datos = obtener_datos_db()
