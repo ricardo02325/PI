@@ -1,4 +1,3 @@
-
 import mysql.connector
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,13 +5,12 @@ import matplotlib.animation as animation
 from matplotlib import style
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    
 
 def iniciar_graficas(frame):
-
     ctk.set_appearance_mode("dark")  
     ctk.set_default_color_theme("blue")  
     style.use('ggplot')
-
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
     fig.tight_layout(pad=5.0)
@@ -21,12 +19,7 @@ def iniciar_graficas(frame):
 
     def obtener_datos():
         """Obtiene los datos desde MySQL y los devuelve como un DataFrame."""
-        db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="sistema_hidroponico"
-        )
+        db = mysql.connector.connect(**DB_CONFIG)
 
         query = """
             SELECT s.tipo_sensor, l.valor, l.fecha_hora
@@ -53,7 +46,6 @@ def iniciar_graficas(frame):
         ax1.clear()
         ax2.clear()
         ax3.clear()
-
 
         ax1.set_title('Nivel de pH', fontsize=14, fontweight='bold')
         ax1.set_xlabel('Fecha y Hora', fontsize=12)
