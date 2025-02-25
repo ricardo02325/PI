@@ -2,8 +2,7 @@ import sys
 import customtkinter as ctk
 import mysql.connector
 
-# Agregar la ruta al directorio raíz del proyecto (donde está 'config')
-sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')  # Ajusta la ruta a la raíz del proyecto
+sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
 
 # Ahora importa la configuración de la base de datos
 from config.db.config import DB_CONFIG
