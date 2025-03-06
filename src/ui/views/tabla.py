@@ -4,6 +4,7 @@ import mysql.connector
 
 sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
 
+<<<<<<< HEAD
 # Importa la configuración de la base de datos
 from config.db.config import DB_CONFIG
 
@@ -36,14 +37,36 @@ def crear_tabla(ventana, datos):
     borde_ancho = 2
 
     ventana.configure(fg_color="white")  # Color de fondo del contenido
+=======
+# Ahora importa la configuración de la base de datos
+from config.db.config import DB_CONFIG
+
+def crear_tabla(ventana, datos):
+    fuente = ("Arial", 12)
+    color_fondo_ventana = "#f0f0f0"
+    color_fondo_encabezado = "#40E0D0"
+    color_borde = "#000000"  # Color del borde
+    borde_ancho = 2  # Grosor del borde
+
+    ventana.configure(bg=color_fondo_ventana)
+>>>>>>> 32a6936cef92d92c2d2f7ff7f472316f6f551129
 
     marco_tabla = ctk.CTkFrame(ventana, fg_color="transparent")
     marco_tabla.pack(padx=10, pady=10, fill="both", expand=True)
 
     for i, fila in enumerate(datos):
         for j, valor in enumerate(fila):
+<<<<<<< HEAD
             fuente_celda = ("Arial", 12, "bold") if i == 0 else fuente
             color_fondo_celda = color_fondo_encabezado if i == 0 else "white"
+=======
+            if i == 0:
+                fuente_celda = ("Arial", 12, "bold")
+                color_fondo_celda = color_fondo_encabezado
+            else:
+                fuente_celda = fuente
+                color_fondo_celda = "white"
+>>>>>>> 32a6936cef92d92c2d2f7ff7f472316f6f551129
 
             # Crear marco de celda con borde
             celda_marco = ctk.CTkFrame(marco_tabla, border_width=borde_ancho, border_color=color_borde)
@@ -51,7 +74,11 @@ def crear_tabla(ventana, datos):
 
             etiqueta = ctk.CTkLabel(
                 celda_marco,
+<<<<<<< HEAD
                 text=str(valor),  # Convertir a string para evitar errores
+=======
+                text=valor,
+>>>>>>> 32a6936cef92d92c2d2f7ff7f472316f6f551129
                 fg_color=color_fondo_celda,
                 font=fuente_celda,
                 corner_radius=0,
@@ -63,6 +90,7 @@ def crear_tabla(ventana, datos):
             # Permitir que las columnas se expandan
             marco_tabla.grid_columnconfigure(j, weight=1)
 
+<<<<<<< HEAD
 def mostrar_historial():
     """Muestra la tabla al hacer click en 'Historial de datos', eliminando la anterior si existe."""
     for widget in content.winfo_children():
@@ -117,3 +145,41 @@ content = ctk.CTkFrame(root, fg_color="white")
 
 # Iniciar el bucle principal de la aplicación
 root.mainloop()
+=======
+    ventana.geometry("700x400")
+
+
+def obtener_datos_db():
+    # Usar la configuración de la base de datos desde DB_CONFIG
+    conexion = mysql.connector.connect(
+        host=DB_CONFIG["host"],
+        user=DB_CONFIG["user"],
+        password=DB_CONFIG["password"],
+        database=DB_CONFIG["database"],
+    )
+
+    cursor = conexion.cursor()
+    query = "SELECT id_sensor, tipo_sensor, estado, fecha_instalacion, valor, fecha_hora FROM php"
+    cursor.execute(query)
+    datos = cursor.fetchall()
+
+    conexion.close()
+
+    return datos
+
+
+ctk.set_appearance_mode("light")  # "dark" para modo oscuro
+ctk.set_default_color_theme("blue")
+
+ventana = ctk.CTk()
+ventana.title("Historial de Sensores")
+
+datos = obtener_datos_db()
+
+encabezados = ["ID Sensor", "Tipo Sensor", "Estado", "Fecha Instalación", "Valor", "Fecha y Hora"]
+datos = [encabezados] + datos
+
+crear_tabla(ventana, datos)
+
+ventana.mainloop()
+>>>>>>> 32a6936cef92d92c2d2f7ff7f472316f6f551129

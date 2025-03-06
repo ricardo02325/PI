@@ -1,5 +1,4 @@
 DELIMITER $$
-
 CREATE TRIGGER FUERA_RANGO_AI
 AFTER INSERT ON lecturas_sensores 
 FOR EACH ROW
@@ -16,5 +15,4 @@ BEGIN
         END IF;
     END IF;
 END$$
-
 DELIMITER ; 
