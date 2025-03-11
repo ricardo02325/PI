@@ -104,10 +104,3 @@ def iniciar_graficas(frame):
             ax3.legend()
         
         canvas.draw()
-<<<<<<< HEAD
-
-    ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000)
-=======
-    
-    ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000)
->>>>>>> 32a6936cef92d92c2d2f7ff7f472316f6f551129

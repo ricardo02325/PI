@@ -1,70 +1,61 @@
-import sys
 import customtkinter as ctk
 import mysql.connector
 
-sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
-from config.db.config import DB_CONFIG
-
-def obtener_datos_db():
-    """Obtiene los datos de la base de datos y los devuelve en una lista."""
+def obtener_datos_sistema():
     try:
         conexion = mysql.connector.connect(
-            host=DB_CONFIG["host"],
-            user=DB_CONFIG["user"],
-            password=DB_CONFIG["password"],
-            database=DB_CONFIG["database"],
+            host="localhost",
+            user="root",
+            password="",
+            database="sistema_hidroponico"
         )
+
         cursor = conexion.cursor()
-        query = "SELECT id_alerta, tipo_alerta, descripcion, fecha_hora, estado FROM alertas"
-        cursor.execute(query)
-        datos = cursor.fetchall()
+        cursor.execute("""
+            SELECT tipo_sensor, valor FROM inf_sensores 
+            WHERE id_lectura = ( 
+                SELECT MAX(id_lectura) 
+                FROM inf_sensores AS sub 
+                WHERE sub.id_sensor = inf_sensores.id_sensor
+            );
+        """)
+
+        resultados = cursor.fetchall()
         conexion.close()
 
-        return datos if datos else [["No hay datos disponibles.", "", "", "", ""]]
+        if resultados:
+            return [(sensor, f"{valor}") for sensor, valor in resultados]
+        else:
+            return [("No hay datos", "N/A")]
 
     except mysql.connector.Error as err:
-        print(f"Error al conectar con la base de datos: {err}")
-        return [["Error al conectar con la base de datos.", "", "", "", ""]]
+        print(f"Error: {err}")
+        return [("Error de conexión", "N/A")]
 
-def crear_tarjetas_alertas(contenedor):
-    """Crea tarjetas para mostrar las alertas en la ventana dada."""
-    datos = obtener_datos_db()
-    
-    for widget in contenedor.winfo_children():
-        widget.destroy()
-    
-    for i, (id_alerta, tipo_alerta, descripcion, fecha_hora, estado) in enumerate(datos):
-        tarjeta = ctk.CTkFrame(contenedor, fg_color="lightgray", corner_radius=10)
-        tarjeta.grid(row=i // 2, column=i % 2, padx=10, pady=10, sticky="nsew")
-        
-        ctk.CTkLabel(tarjeta, text=f"ID: {id_alerta}", font=("Arial", 14, "bold")).pack(pady=2)
-        ctk.CTkLabel(tarjeta, text=f"Tipo: {tipo_alerta}", font=("Arial", 12)).pack(pady=2)
-        ctk.CTkLabel(tarjeta, text=f"Descripción: {descripcion}", font=("Arial", 12), wraplength=250).pack(pady=2)
-        ctk.CTkLabel(tarjeta, text=f"Fecha: {fecha_hora}", font=("Arial", 12)).pack(pady=2)
-        ctk.CTkLabel(tarjeta, text=f"Estado: {estado}", font=("Arial", 12)).pack(pady=2)
+def crear_tarjetas(parent):
+    # Frame principal con fondo blanco
+    frame_principal = ctk.CTkFrame(parent, fg_color="white")
+    frame_principal.pack(pady=1, padx=1, fill="both", expand=True)
 
-def cambiar_contenido(nombre):
-    if nombre == "alertas":
-        crear_tarjetas_alertas(contenedor_principal)
-    else:
-        for widget in contenedor_principal.winfo_children():
-            widget.destroy()
-        ctk.CTkLabel(contenedor_principal, text=f"Vista: {nombre}", font=("Arial", 18, "bold")).pack(pady=20)
+    # Obtener datos
+    datos = obtener_datos_sistema()
 
-root = ctk.CTk()
-root.title("Sistema Hidropónico - Alertas")
-root.geometry("900x600")
+    # Configurar el grid para expansión proporcional
+    total_columnas = len(datos)
+    for i in range(total_columnas):
+        frame_principal.columnconfigure(i, weight=1)
 
-barra_nav = ctk.CTkFrame(root, fg_color="#2C3E50", width=200)
-barra_nav.pack(side="left", fill="y")
+    for i, (titulo, valor) in enumerate(datos):
+        tarjeta = ctk.CTkFrame(
+            frame_principal, fg_color="#D3D3D3", border_color="#00A3A3",
+            border_width=3, corner_radius=12
+        )
+        tarjeta.grid(row=0, column=i, padx=8, pady=8, ipadx=10, ipady=25, sticky="nsew")  # Tamaño ajustado
 
-botones = ["alertas", "configuración", "sensores", "reportes"]
-for boton in botones:
-    btn = ctk.CTkButton(barra_nav, text=boton.capitalize(), command=lambda b=boton: cambiar_contenido(b))
-    btn.pack(pady=10, padx=10, fill="x")
+        titulo_label = ctk.CTkLabel(tarjeta, text=titulo, font=("Arial", 16, "bold"), text_color="#00A3A3")
+        titulo_label.pack(pady=(5, 2))
 
-contenedor_principal = ctk.CTkFrame(root)
-contenedor_principal.pack(side="right", fill="both", expand=True, padx=20, pady=20)
+        valor_label = ctk.CTkLabel(tarjeta, text=valor, font=("Arial", 18, "bold"), text_color="black")
+        valor_label.pack(pady=(2, 5))
 
-cambiar_contenido("alertas")
-root.mainloop()
+    return frame_principal

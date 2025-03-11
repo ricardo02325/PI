@@ -4,7 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import random
 from Graficas_sensores import iniciar_graficas  # Asegúrate de importar la función desde el archivo adecuado
 
-class App(ctk.CTk):
+class App(ctk.CTk):     
     def __init__(self):
         super().__init__()
 
