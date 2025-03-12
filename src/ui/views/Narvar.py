@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from Graficas_sensores import iniciar_graficas
 from tarjetas import crear_tarjetas
+from formulario import crear_formulario
 import sys
 import mysql.connector
 
@@ -103,7 +104,8 @@ show_navbar_button = ctk.CTkButton(
 )
 show_navbar_button.place(x=10, y=10) 
 
-crear_tarjetas(content)   # Crear las tarjetas en el panel de contenido
-iniciar_graficas(content)  # Iniciar las gráficas en el panel de contenido
+# crear_tarjetas(content)   # Crear las tarjetas en el panel de contenido
+# iniciar_graficas(content)  # Iniciar las gráficas en el panel de contenido
+crear_formulario(content)
 
 root.mainloop()
