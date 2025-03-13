@@ -48,7 +48,7 @@ def iniciar_graficas(frame):
     ctk.set_default_color_theme("blue")  
     style.use('ggplot')
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 5))
     fig.tight_layout(pad=5.0)
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.get_tk_widget().pack(fill="both", expand=True)
