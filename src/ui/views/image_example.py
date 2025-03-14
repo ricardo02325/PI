@@ -1,6 +1,7 @@
 import customtkinter
 import os
 from PIL import Image
+from formulario import crear_formulario
 
 
 class App(customtkinter.CTk):
@@ -114,5 +115,7 @@ class App(customtkinter.CTk):
 
 if __name__ == "__main__":
     app = App()
+    
+    crear_formulario(app)
     app.mainloop()
 
