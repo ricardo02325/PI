@@ -1,15 +1,15 @@
 import customtkinter as ctk
 from Graficas_sensores import iniciar_graficas
-from tarjetas import crear_tarjetas
-from formulario import crear_formulario
 import sys
 import mysql.connector
+
+sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
 
 # Configuración de conexión a la base de datos
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
-    "password": "",
+    "password": "",  # Agregar contraseña si es necesario
     "database": "sistema_hidroponico"
 }
 
@@ -71,8 +71,7 @@ root = ctk.CTk()
 root.title("Sistema Hidropónico")
 root.geometry("1000x600")
 
-navbar_width = 200  # Ajustar el ancho de la barra lateral según el tamaño deseado
-navbar = ctk.CTkFrame(root, width=navbar_width, fg_color="sky blue", corner_radius=0)
+navbar = ctk.CTkFrame(root, width=200, fg_color="sky blue", corner_radius=0)
 navbar.place(x=0, y=0, relheight=1)  
 
 title_frame = ctk.CTkFrame(navbar, fg_color="sky blue", corner_radius=0)
@@ -89,7 +88,7 @@ for option in options:
     button.pack(pady=8, padx=10)  
 
 content = ctk.CTkFrame(root, fg_color="white")
-content.place(x=navbar_width, y=0, relwidth=1, relheight=1)  # Ajuste para dejar espacio para la barra lateral
+content.place(x=200, y=0, relwidth=1, relheight=1) 
 
 show_navbar_button = ctk.CTkButton(
     root, 
@@ -104,8 +103,6 @@ show_navbar_button = ctk.CTkButton(
 )
 show_navbar_button.place(x=10, y=10) 
 
-# crear_tarjetas(content)   # Crear las tarjetas en el panel de contenido
-# iniciar_graficas(content)  # Iniciar las gráficas en el panel de contenido
-crear_formulario(content)
+iniciar_graficas(content)
 
 root.mainloop()
