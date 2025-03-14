@@ -116,6 +116,6 @@ class App(customtkinter.CTk):
 if __name__ == "__main__":
     app = App()
     
-    crear_formulario(app)
+    # crear_formulario(app)
     app.mainloop()
 
