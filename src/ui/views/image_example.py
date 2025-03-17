@@ -104,4 +104,9 @@ class App(customtkinter.CTk):
 
 if __name__ == "__main__":
     app = App()
+<<<<<<< HEAD
+=======
+    
+    # crear_formulario(app)
+>>>>>>> 857f328c35eb6bc348f954f9fa0d49dd23ab4ebf
     app.mainloop()
