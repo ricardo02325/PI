@@ -60,6 +60,7 @@ class App(customtkinter.CTk):
         self.graphs_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
 
         self.graficas_mostradas = False  # Control para evitar recargar las gráficas
+        self.alertas_mostradas = False  # Control para evitar recargar las alertas
         self.select_frame_by_name("home")
 
     def select_frame_by_name(self, name):
@@ -74,7 +75,9 @@ class App(customtkinter.CTk):
 
         if name == "alerts":
             self.alerts_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-            iniciar_alertas(self.alerts_frame)
+            if not self.alertas_mostradas:  # Verifica si las alertas ya han sido mostradas
+                iniciar_alertas(self.alerts_frame)
+                self.alertas_mostradas = True
         else:
             self.alerts_frame.grid_forget()
 
