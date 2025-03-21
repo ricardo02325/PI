@@ -7,6 +7,9 @@ from matplotlib import style
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# Aseguramos que ani se mantenga en memoria
+ani = None
+
 sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
 
 def obtener_datos():
@@ -48,61 +51,37 @@ def iniciar_graficas(frame):
     ctk.set_default_color_theme("blue")  
     style.use('ggplot')
 
+    # Crear la figura y los ejes una sola vez
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 5))
     fig.tight_layout(pad=5.0)
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def actualizar_graficas(frame):
-        ax1.clear()
-        ax2.clear()
-        ax3.clear()
-
-        ax1.set_title('Nivel de pH')
-        ax1.set_xlabel('Fecha y Hora')
-        ax1.set_ylabel('Valor de pH')
-        ax1.grid(True, linestyle='--', alpha=0.6)
-
-        ax2.set_title('Conductividad Eléctrica')
-        ax2.set_xlabel('Fecha y Hora')
-        ax2.set_ylabel('Valor (mS/cm)')
-        ax2.grid(True, linestyle='--', alpha=0.6)
-
-        ax3.set_title('Temperatura')
-        ax3.set_xlabel('Fecha y Hora')
-        ax3.set_ylabel('Temperatura (°C)')
-        ax3.grid(True, linestyle='--', alpha=0.6)
-
+    def actualizar_graficas(_):
         df = obtener_datos()
-        if df is None:
+        if df is None or df.empty:
+            # Si no hay datos, mostrar mensaje en los tres gráficos
             for ax in [ax1, ax2, ax3]:
+                ax.cla()  # Limpia solo los datos, manteniendo títulos y etiquetas
                 ax.text(0.5, 0.5, "No hay datos disponibles", fontsize=14, ha='center', va='center', transform=ax.transAxes)
-                ax.set_xlim(0, 1)
-                ax.set_ylim(0, 1)
             canvas.draw()
             return
-        
-        # Graficar pH
-        df_ph = df[df['tipo_sensor'] == 'pH']
-        if not df_ph.empty:
-            ax1.plot(df_ph['fecha_hora'], df_ph['valor'], label="pH", color='dodgerblue', linewidth=2)
-            ax1.scatter(df_ph['fecha_hora'], df_ph['valor'], color='blue', edgecolors='black', s=50)
-            ax1.legend()
 
-        # Graficar Conductividad Eléctrica
-        df_ce = df[df['tipo_sensor'] == 'Conductividad eléctrica']
-        if not df_ce.empty:
-            ax2.plot(df_ce['fecha_hora'], df_ce['valor'], label="Conductividad Eléctrica", color='limegreen', linewidth=2)
-            ax2.scatter(df_ce['fecha_hora'], df_ce['valor'], color='green', edgecolors='black', s=50)
-            ax2.legend()
+        # Limpia los gráficos anteriores
+        for ax in [ax1, ax2, ax3]:
+            ax.cla()
 
-        # Graficar Temperatura
-        df_temp = df[df['tipo_sensor'] == 'Temperatura']
-        if not df_temp.empty:
-            ax3.plot(df_temp['fecha_hora'], df_temp['valor'], label="Temperatura", color='tomato', linewidth=2)
-            ax3.scatter(df_temp['fecha_hora'], df_temp['valor'], color='red', edgecolors='black', s=50)
-            ax3.legend()
-        
+        # Graficar los datos para cada tipo de sensor
+        for tipo, ax, color in [('pH', ax1, 'blue'), ('Conductividad eléctrica', ax2, 'green'), ('Temperatura', ax3, 'red')]:
+            df_tipo = df[df['tipo_sensor'] == tipo]
+            if not df_tipo.empty:
+                ax.plot(df_tipo['fecha_hora'], df_tipo['valor'], color=color, linewidth=2, label=tipo)
+                ax.scatter(df_tipo['fecha_hora'], df_tipo['valor'], color=color, s=50)
+                ax.legend()
+
         canvas.draw()
-    
-    ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000)
+
+    global ani  # Necesario para que la variable no sea eliminada
+    if ani is None:  # Solo crear la animación si aún no existe
+        ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000, cache_frame_data=False)
+
