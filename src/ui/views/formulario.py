@@ -5,7 +5,7 @@ import customtkinter
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 from src.models.models import obtener_sensores
-from src.models.models import actualizar_trigger  # Importamos la función
+from src.models.models import actualizar_trigger
 
 class Formulario(customtkinter.CTkFrame):
     def __init__(self, master=None, **kwargs):

@@ -84,4 +84,3 @@ def iniciar_graficas(frame):
     global ani  # Necesario para que la variable no sea eliminada
     if ani is None:  # Solo crear la animación si aún no existe
         ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000, cache_frame_data=False)
-
