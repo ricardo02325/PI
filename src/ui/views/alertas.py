@@ -71,27 +71,29 @@ def iniciar_alertas(frame):
     label_3 = ctk.CTkLabel(recuadro_3, text="⚠️ ¡Alerta de Conductividad! ⚠️\nSin alertas detectadas.", font=('Arial', 12, 'bold'), text_color=obtener_color_texto())
     label_3.pack(padx=10, pady=10)
 
-    # Funciones para manejar las acciones de los íconos
     def resolver_pH():
+        print("Resolviendo alerta de pH...")
         # Actualizar estado a "resuelta" y mostrar modal
         actualizar_alerta(id_alerta_pH, 'resuelta')
         mostrar_modal(frame_modal, label_modal, "pH", "resuelta")
 
     def resolver_temperatura():
+        print("Resolviendo alerta de Temperatura...")
         # Actualizar estado a "resuelta" y mostrar modal
         actualizar_alerta(id_alerta_temperatura, 'resuelta')
         mostrar_modal(frame_modal, label_modal, "Temperatura", "resuelta")
-
+    
     def resolver_conductividad():
+        print("Resolviendo alerta de Conductividad...")
         # Actualizar estado a "resuelta" y mostrar modal
         actualizar_alerta(id_alerta_conductividad, 'resuelta')
         mostrar_modal(frame_modal, label_modal, "Conductividad", "resuelta")
     
     def descartar_alerta(tipo_alerta):
-        # Actualizar estado a "descartada"
         print(f"Descartando alerta de {tipo_alerta}...")
-        # También se podría actualizar el estado en la base de datos aquí
+        # Actualizar estado a "descartada"
         mostrar_modal(frame_modal, label_modal, tipo_alerta, "descartada")
+
 
     def editar_alerta(tipo_alerta, id_sensor):
         # Llamar al formulario de edición, que puede ser un modal con un formulario
@@ -184,8 +186,13 @@ def iniciar_alertas(frame):
     
     # Actualizar etiquetas con alertas si existen
     if len(alertas) > 0:
+        # Asignar alerta de pH al recuadro 1
         label_1.configure(text=f"⚠️ ¡Alerta de pH! ⚠️\n{alertas[0]['descripcion']}")
+
     if len(alertas) > 1:
+        # Asignar alerta de Temperatura al recuadro 2
         label_2.configure(text=f"⚠️ ¡Temperatura Alta! ⚠️\n{alertas[1]['descripcion']}")
+
     if len(alertas) > 2:
+        # Asignar alerta de Conductividad al recuadro 3
         label_3.configure(text=f"⚠️ ¡Alerta de Conductividad! ⚠️\n{alertas[2]['descripcion']}")

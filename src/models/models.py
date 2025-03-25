@@ -53,8 +53,7 @@ def obtener_alertas():
             cursor = conexion.cursor(dictionary=True)  # Retorna resultados como diccionarios
             consulta_sql = """
                 SELECT * FROM alertas 
-                WHERE tipo_alerta = 'Valor fuera de rango' 
-                AND estado = 'inactivo'
+                WHERE estado = 'por atender'
             """
             cursor.execute(consulta_sql)
             alertas = cursor.fetchall()  # Obtiene todas las filas de la consulta
@@ -89,13 +88,13 @@ def actualizar_trigger(id_sensor, valor_min, valor_max):
                         VALUES ('Valor fuera de rango', 
                                 CONCAT('Valor del sensor {id_sensor} demasiado bajo: ', NEW.valor), 
                                 NOW(), 
-                                (SELECT estado FROM sensores WHERE id_sensor = NEW.id_sensor));
+                                'Por atender');
                     ELSEIF NEW.valor > {valor_max} THEN
                         INSERT INTO alertas(tipo_alerta, descripcion, fecha_hora, estado)
                         VALUES ('Valor fuera de rango', 
                                 CONCAT('Valor del sensor {id_sensor} demasiado alto: ', NEW.valor), 
                                 NOW(), 
-                                (SELECT estado FROM sensores WHERE id_sensor = NEW.id_sensor));
+                                'Por atender');
                     END IF;
                 END IF;
             END$$
@@ -110,6 +109,7 @@ def actualizar_trigger(id_sensor, valor_min, valor_max):
         finally:
             cursor.close()
             conexion.close()
+
 
 def actualizar_alerta(id_alerta, nuevo_estado):
     """Actualizar el estado de una alerta en la base de datos."""
