@@ -51,20 +51,20 @@ def iniciar_graficas(frame):
     ctk.set_default_color_theme("blue")  
     style.use('ggplot')
     
-    # Crear un frame para el encabezado con el texto de bienvenida
+
     encabezado_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    encabezado_frame.pack(side="top", fill="x", pady=30)  # Aumenté el espacio vertical para más separación
+    encabezado_frame.pack(side="top", fill="x", pady=30)  
     
-    # Etiqueta de texto 'BIENVENIDO' centrado y más grande
+
     bienvenido_label = ctk.CTkLabel(
         encabezado_frame, 
-        text="BIENVENIDO 🏠",  # Texto actualizado
-        font=("Arial", 30, "bold"),  # Tamaño más grande
+        text="BIENVENIDO 🏠",  
+        font=("Arial", 30, "bold"), 
         text_color="black"
     )
-    bienvenido_label.pack(side="top", padx=10, pady=0)  # Aseguramos que esté centrado y con más separación
-    
-    # Crear la figura y los ejes con un diseño más moderno
+    bienvenido_label.pack(side="top", padx=10, pady=0) 
+
+
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     fig.patch.set_facecolor('#f4f4f4')
     fig.tight_layout(pad=4.0)
@@ -72,11 +72,11 @@ def iniciar_graficas(frame):
     canvas = FigureCanvasTkAgg(fig, master=frame)
     canvas.get_tk_widget().pack(side="bottom", fill="both", expand=True)
 
-    # Crear un frame para los recuadros de lectura
+
     lecturas_frame = ctk.CTkFrame(frame, fg_color="transparent")
     lecturas_frame.pack(side="top", fill="x", pady=10)
 
-    # Diccionario para almacenar etiquetas de lectura
+
     etiquetas_lectura = {}
     sensores = {'PH': 'pH', 'CONDUCTIVIDAD': 'Conductividad eléctrica', 'TEMPERATURA': 'Temperatura'}
 
@@ -90,12 +90,12 @@ def iniciar_graficas(frame):
             width=200, 
             height=100
         )
-        cuadro.pack_propagate(False)  # Evitar que el recuadro se ajuste al contenido
+        cuadro.pack_propagate(False)  
         cuadro.pack(side="left", padx=10, pady=5, expand=True)
 
         etiqueta = ctk.CTkLabel(
             cuadro, 
-            text=f"{etiqueta_sensor}\n-",  # Aseguramos que el texto sea en mayúsculas
+            text=f"{etiqueta_sensor}\n-",  
             font=("Arial", 14, "bold"), 
             text_color="black", 
             justify="center"
@@ -125,7 +125,7 @@ def iniciar_graficas(frame):
                 ax.set_facecolor('#ffffff')
                 ax.grid(True, linestyle='--', alpha=0.7)
                 
-                # Actualizar el cuadro de lectura correspondiente
+
                 valor_actual = df_tipo['valor'].iloc[-1]
                 etiquetas_lectura[tipo].configure(text=f"{tipo}\n\n{valor_actual}")
             else:
@@ -137,7 +137,7 @@ def iniciar_graficas(frame):
     if ani is None:
         ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000, cache_frame_data=False)
 
-    # Crear los botones con los textos personalizados
+
     boton_frame = ctk.CTkFrame(frame)
     boton_frame.pack(side="top", fill="x", pady=10)
 
@@ -147,7 +147,7 @@ def iniciar_graficas(frame):
     for i, texto in enumerate(botones_textos):
         btn = ctk.CTkButton(
             boton_frame,
-            text=texto,  # Asignamos el texto personalizado a cada botón
+            text=texto,  
             fg_color="white",
             border_color="red",
             border_width=2,
