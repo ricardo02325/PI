@@ -36,6 +36,7 @@ def actualizar_alerta(id_alerta, nuevo_estado):
             SET estado = %s
             WHERE id_alerta = %s
             """
+            print(f"Ejecutando consulta: {query}, con valores: ({nuevo_estado}, {id_alerta})")  # Depuración
             cursor.execute(query, (nuevo_estado, id_alerta))
             conexion.commit()
             print(f"Alerta {id_alerta} actualizada a estado {nuevo_estado}.")

@@ -176,7 +176,7 @@ def iniciar_alertas(frame):
     
     # Suponiendo que el id del sensor de Conductividad es 'id_sensor_conductividad'
     id_alerta_conductividad = 3  # Esta es solo una suposición, reemplázalo con el valor real
-    boton_3_editar = ctk.CTkButton(recuadro_3, text="✏️ Editar", command=lambda: editar_alerta("Conductividad", id_alerta_conductividad), width=230, corner_radius=5, fg_color="#FFEB3B")  # Amarillo suave
+    boton_3_editar = ctk.CTkButton(recuadro_3, text="✏️ Editar", command=lambda: editar_alerta("Conductividad", id_alerta_conductividad), width=230, corner_radius=5, fg_color="#1976D2")
     boton_3_editar.pack(pady=5, padx=10)
     
     # Modal de resolución de alerta
