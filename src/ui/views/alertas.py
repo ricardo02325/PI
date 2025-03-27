@@ -8,7 +8,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from src.models.models import (
     obtener_alertas,
     actualizar_trigger,
-    actualizar_alerta
+    actualizar_alerta,
+    obtener_alertas_completas
 )
 
 COLORES = {
@@ -38,11 +39,13 @@ def obtener_color_texto():
         return "black"
 
 def crear_tabla_historial(frame, alertas):
-    # Frame para contener la tabla y su título
+    """Crea una tabla con el historial de alertas dentro del frame dado."""
+    
+    # Frame contenedor
     frame_tabla = ctk.CTkFrame(frame)
     frame_tabla.pack(pady=(30, 20), padx=20, fill="both", expand=True)
-    
-    # Título de la tabla
+
+    # Título
     label_titulo_tabla = ctk.CTkLabel(
         frame_tabla, 
         text="📜 Historial Completo de Alertas", 
@@ -50,101 +53,106 @@ def crear_tabla_historial(frame, alertas):
         text_color=obtener_color_texto()
     )
     label_titulo_tabla.pack(pady=(0, 10))
-    
-    # Estilo para la tabla
+
+    # Estilo de la tabla
     estilo = ttk.Style()
     estilo.theme_use('default')
-    
+
     # Configurar colores según el modo (claro/oscuro)
-    if ctk.get_appearance_mode() == "dark":
-        bg_color = "#2b2b2b"
-        fg_color = "white"
-        heading_bg = "#3b3b3b"
-    else:
-        bg_color = "white"
-        fg_color = "black"
-        heading_bg = "#f0f0f0"
-    
+    modo = ctk.get_appearance_mode()
+    colores = {
+        "dark": {"bg": "#2b2b2b", "fg": "white", "heading_bg": "#3b3b3b"},
+        "light": {"bg": "white", "fg": "black", "heading_bg": "#f0f0f0"}
+    }
+    colores_actuales = colores["dark"] if modo == "dark" else colores["light"]
+
     estilo.configure(
         "Treeview",
-        background=bg_color,
-        foreground=fg_color,
+        background=colores_actuales["bg"],
+        foreground=colores_actuales["fg"],
         rowheight=25,
-        fieldbackground=bg_color,
-        bordercolor=heading_bg,
+        fieldbackground=colores_actuales["bg"],
+        bordercolor=colores_actuales["heading_bg"],
         borderwidth=0,
-        font=('Arial', 10))
+        font=('Arial', 10)
+    )
     
     estilo.configure(
         "Treeview.Heading",
-        background=heading_bg,
-        foreground=fg_color,
+        background=colores_actuales["heading_bg"],
+        foreground=colores_actuales["fg"],
         relief="flat",
-        font=('Arial', 10, 'bold'))
-    
+        font=('Arial', 10, 'bold')
+    )
+
     estilo.map(
         "Treeview",
-        background=[('selected', '#0078d7' if ctk.get_appearance_mode() == "dark" else '#1f6aa5')],
-        foreground=[('selected', 'white')])
-    
-    # Crear la tabla
+        background=[('selected', '#0078d7' if modo == "dark" else '#1f6aa5')],
+        foreground=[('selected', 'white')]
+    )
+
+    # Crear la tabla con columnas basadas en la consulta SQL
     tabla = ttk.Treeview(
         frame_tabla,
-        columns=('id', 'tipo', 'descripcion', 'fecha', 'estado'),
+        columns=('id_alerta', 'tipo_alerta', 'descripcion', 'fecha_hora', 'estado'),
         show='headings',
         style="Treeview"
     )
-    
+
     # Configurar columnas
-    tabla.column('id', width=50, anchor='center')
-    tabla.column('tipo', width=120, anchor='center')
+    tabla.column('id_alerta', width=50, anchor='center')
+    tabla.column('tipo_alerta', width=120, anchor='center')
     tabla.column('descripcion', width=250, anchor='w')
-    tabla.column('fecha', width=150, anchor='center')
+    tabla.column('fecha_hora', width=150, anchor='center')
     tabla.column('estado', width=100, anchor='center')
-    
+
     # Encabezados
-    tabla.heading('id', text='ID')
-    tabla.heading('tipo', text='Tipo de Alerta')
+    tabla.heading('id_alerta', text='ID')
+    tabla.heading('tipo_alerta', text='Tipo de Alerta')
     tabla.heading('descripcion', text='Descripción')
-    tabla.heading('fecha', text='Fecha')
+    tabla.heading('fecha_hora', text='Fecha')
     tabla.heading('estado', text='Estado')
-    
+
     # Scrollbar
     scrollbar = ttk.Scrollbar(frame_tabla, orient="vertical", command=tabla.yview)
     scrollbar.pack(side="right", fill="y")
     tabla.configure(yscrollcommand=scrollbar.set)
-    
+
     # Insertar datos
     for alerta in alertas:
-        estado = alerta.get('estado', 'activa')
-        color_estado = ('green' if estado == 'resuelta' else 
-                        'red' if estado == 'activa' else 
-                        'gray')
+        estado = alerta.get('estado', 'activa').lower()  # Convertimos a minúsculas para evitar errores
         
+        # Definir color según el estado
+        colores_estado = {
+            "resuelta": "green",
+            "activa": "red",
+            "descartada": "gray"
+        }
+
+        # Insertar alerta en la tabla
         tabla.insert(
             '', 
             'end', 
             values=(
-                alerta.get('id', ''),
-                alerta.get('tipo', ''),
+                alerta.get('id_alerta', ''),
+                alerta.get('tipo_alerta', ''),
                 alerta.get('descripcion', ''),
-                alerta.get('fecha', ''),
+                alerta.get('fecha_hora', ''),
                 estado
             ),
             tags=(estado,)
         )
-    
+
     # Configurar colores para los estados
-    tabla.tag_configure('resuelta', foreground='green')
-    tabla.tag_configure('activa', foreground='red')
-    tabla.tag_configure('descartada', foreground='gray')
-    
+    for estado, color in colores_estado.items():
+        tabla.tag_configure(estado, foreground=color)
+
     tabla.pack(fill="both", expand=True, padx=10, pady=10)
-    
+
     return frame_tabla
 
 def iniciar_alertas(frame):
-    alertas = obtener_alertas()
+    alertas = obtener_alertas_completas()
     
     # Frame para el título
     frame_titulo = ctk.CTkFrame(frame)

@@ -66,6 +66,31 @@ def obtener_alertas():
             cursor.close()
             conexion.close()
 
+def obtener_alertas_completas():
+    """Obtiene todas las alertas (activas, resueltas y descartadas) ordenadas por fecha descendente."""
+    conexion = conectar_db()
+    if not conexion:
+        return []
+
+    try:
+        cursor = conexion.cursor(dictionary=True)  # Retorna resultados como diccionarios
+        consulta_sql = """
+            SELECT id_alerta, tipo_alerta, descripcion, fecha_hora, estado 
+            FROM alertas 
+            ORDER BY fecha_hora DESC
+        """
+        cursor.execute(consulta_sql)
+        alertas = cursor.fetchall()  # Obtiene todas las filas de la consulta
+        
+        print(f"Historial de alertas obtenidas: {alertas}")  # Para depuración
+        return alertas
+    except mysql.connector.Error as err:
+        print(f"Error al obtener el historial de alertas: {err}")
+        return []
+    finally:
+        cursor.close()
+        conexion.close()
+
 def actualizar_trigger(id_sensor, valor_min, valor_max):
     """Elimina el trigger existente y crea uno nuevo con los valores proporcionados."""
     conexion = conectar_db()
