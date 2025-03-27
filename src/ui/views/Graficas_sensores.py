@@ -2,13 +2,9 @@ import sys
 import mysql.connector
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import style
-
-# Variable global para la animación
-ani = None
 
 # Añadir el path al proyecto si es necesario
 sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
@@ -27,7 +23,7 @@ def obtener_datos():
             SELECT s.tipo_sensor, l.valor, l.fecha_hora
             FROM lecturas_sensores l
             JOIN sensores s ON l.id_sensor = s.id_sensor
-            WHERE LOWER(s.tipo_sensor) IN ('ph', 'conductividad eléctrica', 'temperatura')
+            WHERE LOWER(s.tipo_sensor) IN ('ph', 'conductividad_elec', 'temperatura')
             ORDER BY l.fecha_hora
         """
         
@@ -39,12 +35,20 @@ def obtener_datos():
         
         df = pd.DataFrame(datos)
         if df.empty:
+            print("⚠ No se encontraron datos en la base de datos.")
             return None
         
+        # Normalizar nombres de sensores para evitar errores
+        df['tipo_sensor'] = df['tipo_sensor'].str.lower().str.strip()
         df['fecha_hora'] = pd.to_datetime(df['fecha_hora'])
+        df['valor'] = pd.to_numeric(df['valor'], errors='coerce')  
+
+        print("✅ Datos obtenidos de MySQL:")
+        print(df.head())  
+
         return df
     except mysql.connector.Error as err:
-        print(f"Error de conexión: {err}")
+        print(f"❌ Error de conexión: {err}")
         return None
 
 def iniciar_graficas(frame):
@@ -53,7 +57,7 @@ def iniciar_graficas(frame):
     ctk.set_default_color_theme("blue")  
     style.use('ggplot')
 
-    frame.configure(fg_color="#f0f0f0")  # Fondo del frame
+    frame.configure(fg_color="#f0f0f0")  
     
     # Encabezado
     encabezado_frame = ctk.CTkFrame(frame, fg_color="transparent")
@@ -80,14 +84,14 @@ def iniciar_graficas(frame):
     lecturas_frame.pack(side="top", fill="x", pady=10)
 
     etiquetas_lectura = {}
-    sensores = {'pH': 'pH', 'Conductividad eléctrica': 'Conductividad eléctrica', 'Temperatura': 'Temperatura'}
+    sensores = {'ph': 'pH', 'conductividad_elec': 'Conductividad eléctrica', 'temperatura': 'Temperatura'}
 
-    for etiqueta_sensor, sensor_db in sensores.items():
+    for sensor_db, etiqueta_sensor in sensores.items():
         cuadro = ctk.CTkFrame(
             lecturas_frame, 
-            fg_color="#E3F2FD",  # Azul claro
+            fg_color="#E3F2FD",
             corner_radius=8, 
-            border_color="#0D47A1",  # Azul fuerte
+            border_color="#0D47A1",
             border_width=2, 
             width=200, 
             height=100
@@ -105,7 +109,7 @@ def iniciar_graficas(frame):
         etiqueta.pack(expand=True)
         etiquetas_lectura[sensor_db] = etiqueta
 
-    def actualizar_graficas(_):
+    def actualizar_graficas():
         df = obtener_datos()
         if df is None or df.empty:
             for ax in axes:
@@ -114,62 +118,49 @@ def iniciar_graficas(frame):
                 ax.text(0.5, 0.5, "No hay datos", fontsize=14, ha='center', va='center', transform=ax.transAxes)
             for etiqueta in etiquetas_lectura.values():
                 etiqueta.configure(text=f"{etiqueta.cget('text').split('\n')[0]}\nSin datos")
-            canvas.draw()
+            canvas.draw_idle()
             return
-        
-        # Convertir valores a tipo numérico si es necesario
-        df['valor'] = pd.to_numeric(df['valor'], errors='coerce')  # Asegura que los valores sean numéricos
         
         # Asegurar que los datos están ordenados cronológicamente
         df = df.sort_values(by='fecha_hora')
-        
-        colores = {'pH': '#0D47A1', 'Conductividad eléctrica': '#388E3C', 'Temperatura': '#D32F2F'}
-        
-        # Filtrar los datos por tipo de sensor y graficarlos en sus respectivos subgráficos
+
+        colores = {'ph': '#0D47A1', 'conductividad_elec': '#388E3C', 'temperatura': '#D32F2F'}
+
+        # Verificación de datos filtrados
+        print("\n📊 Datos filtrados por tipo de sensor:")
         for i, (tipo, ax) in enumerate(zip(colores.keys(), axes)):
+            df_tipo = df[df['tipo_sensor'] == tipo]
+            print(f"\n{tipo}: {len(df_tipo)} registros")
+
             ax.clear()
-            df_tipo = df[df['tipo_sensor'].str.lower() == tipo.lower()]
             if not df_tipo.empty:
                 ax.plot(df_tipo['fecha_hora'], df_tipo['valor'], color=colores[tipo], linewidth=2, marker='o', markersize=6)
-                ax.set_title(tipo, fontsize=12, fontweight='bold', color="#333333")
+                ax.set_title(tipo.capitalize(), fontsize=12, fontweight='bold', color="#333333")
                 ax.set_facecolor('#ffffff')
                 ax.grid(True, linestyle='--', alpha=0.5, color="gray")
                 
-                # Actualizar valores
+                # Actualizar valores en la UI
                 valor_actual = df_tipo['valor'].iloc[-1]
-                etiquetas_lectura[tipo].configure(text=f"{tipo}\n\n{valor_actual}")
+                etiquetas_lectura[tipo].configure(text=f"{sensores[tipo]}\n\n{valor_actual:.2f}")
             else:
-                etiquetas_lectura[tipo].configure(text=f"{tipo}\n\nSin datos")
+                etiquetas_lectura[tipo].configure(text=f"{sensores[tipo]}\n\nSin datos")
     
-        canvas.draw()
+        canvas.draw_idle()  # Actualizar UI inmediatamente
 
-    global ani
-    if ani is None:
-        ani = animation.FuncAnimation(fig, actualizar_graficas, interval=5000, cache_frame_data=False)
+        # Actualizar cada 10 segundos
+        frame.after(10000, actualizar_graficas)
 
-    # Botones
-    boton_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    boton_frame.pack(side="top", fill="x", pady=10)
+    # Botón para actualizar manualmente
+    boton_actualizar = ctk.CTkButton(
+        frame,
+        text="Actualizar Gráficas",
+        fg_color="#E3F2FD",
+        border_color="#0D47A1",
+        border_width=2,
+        text_color="#333333",
+        hover_color="#BBDEFB",
+        command=actualizar_graficas
+    )
+    boton_actualizar.pack(side="top", pady=10)
 
-    botones_textos = ["Bomba 1", "Bomba 2", "Bomba 3", "Sensor PH", "Sensor Temp", "Sensor CE"]
-    botones = []
-    
-    for i, texto in enumerate(botones_textos):
-        btn = ctk.CTkButton(
-            boton_frame,
-            text=texto,  
-            fg_color="#E3F2FD",  # Azul claro
-            border_color="#0D47A1",
-            border_width=2,
-            text_color="#333333",
-            hover_color="#BBDEFB",  # Azul más claro al pasar el mouse
-            command=lambda b=i: cambiar_color(b, botones)
-        )
-        btn.pack(side="left", padx=10, pady=5, expand=True)
-        botones.append(btn)
-
-    def cambiar_color(indice, botones):
-        if botones[indice].cget("border_color") == "#0D47A1":
-            botones[indice].configure(border_color="#388E3C")  # Verde
-        else:
-            botones[indice].configure(border_color="#0D47A1")  # Azul
+    actualizar_graficas()  # Primera actualización al cargar la UI 
