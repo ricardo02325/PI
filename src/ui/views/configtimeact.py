@@ -1,7 +1,6 @@
 import sys
 import mysql.connector
 import customtkinter as ctk
-from tkinter import messagebox
 from datetime import datetime
 
 # Añadir el path al proyecto si es necesario
@@ -10,11 +9,60 @@ sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
+class Modal(ctk.CTkToplevel):
+    def __init__(self, parent, title, message, width=400, height=200):
+        super().__init__(parent)
+        self.title(title)
+        self.geometry(f"{width}x{height}")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        
+        # Centrar el modal respecto a la ventana principal
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - (width // 2)
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - (height // 2)
+        self.geometry(f"+{x}+{y}")
+        
+        # Frame principal
+        self.main_frame = ctk.CTkFrame(self, corner_radius=12)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Título
+        ctk.CTkLabel(
+            self.main_frame, 
+            text=title,
+            font=("Arial", 18, "bold"),
+            anchor="center"
+        ).pack(pady=(15, 10), padx=20, fill="x")
+        
+        # Mensaje
+        ctk.CTkLabel(
+            self.main_frame, 
+            text=message,
+            font=("Arial", 14),
+            wraplength=width-40,
+            justify="left"
+        ).pack(pady=(0, 20), padx=20, fill="x")
+        
+        # Botón de cerrar
+        ctk.CTkButton(
+            self.main_frame,
+            text="Cerrar",
+            command=self.destroy,
+            font=("Arial", 14),
+            height=40,
+            fg_color=("#3A7EBF", "#1F538D"),
+            hover_color=("#2D5F8B", "#14375F")
+        ).pack(pady=(0, 15), padx=20, fill="x")
+
 class ConfiguracionSistema(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Configuración del Sistema Hidropónico")
         self.geometry("1200x700")
+        
+        # Variable para controlar si ya existe un modal abierto
+        self.modal_abierto = False
 
         # Frame principal
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -59,46 +107,9 @@ class ConfiguracionSistema(ctk.CTk):
         )
         self.opciones_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
-        # Opciones de configuración con mejor diseño
-        self.opciones = {"Bomba 1": 0, "Bomba 2": 0, "Bomba 3": 0}
-        for bomba in self.opciones:
-            frame_opcion = ctk.CTkFrame(
-                self.opciones_frame, 
-                fg_color=("gray90", "gray20"),
-                corner_radius=8
-            )
-            frame_opcion.pack(fill="x", pady=6)
-
-            label = ctk.CTkLabel(
-                frame_opcion, 
-                text=bomba, 
-                width=100, 
-                anchor="w",
-                font=("Arial", 14)
-            )
-            label.pack(side="left", padx=10, pady=8)
-            
-            entry = ctk.CTkEntry(
-                frame_opcion, 
-                width=100,
-                placeholder_text="Segundos",
-                justify="right"
-            )
-            entry.pack(side="right", padx=10, pady=8)
-            self.opciones[bomba] = entry
-
-        # Botón de guardar con mejor diseño
-        save_button = ctk.CTkButton(
-            self.opciones_frame, 
-            text="Guardar Configuración", 
-            command=self.guardar_cambios,
-            corner_radius=8,
-            height=40,
-            font=("Arial", 14),
-            fg_color=("#3A7EBF", "#1F538D"),
-            hover_color=("#2D5F8B", "#14375F")
-        )
-        save_button.pack(pady=(10, 0), fill="x")
+        # Inicializar opciones vacías (se llenarán con datos de la BD)
+        self.opciones = {}
+        self.bombas_data = {}  # Para almacenar datos de las bombas
 
         # Sección de últimos datos ingresados
         self.ultimos_datos_frame = ctk.CTkFrame(
@@ -124,35 +135,6 @@ class ConfiguracionSistema(ctk.CTk):
 
         # Recuadros de últimos datos (inicialmente vacíos)
         self.recuadros_ultimos_datos = {}
-        for i, bomba in enumerate(self.opciones.keys()):
-            frame = ctk.CTkFrame(
-                self.recuadros_frame,
-                border_width=2,
-                border_color="red",
-                corner_radius=20,  # Bordes más ovalados
-                fg_color="white"
-            )
-            frame.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
-            self.recuadros_frame.grid_columnconfigure(i, weight=1)
-            
-            # Título de la bomba
-            ctk.CTkLabel(
-                frame,
-                text=bomba,
-                text_color="black",
-                font=("Arial", 12, "bold")
-            ).pack(pady=(8, 0))
-            
-            # Valor (inicialmente vacío)
-            valor_label = ctk.CTkLabel(
-                frame,
-                text="N/A",
-                text_color="black",
-                font=("Arial", 14)
-            )
-            valor_label.pack(pady=(0, 8))
-            
-            self.recuadros_ultimos_datos[bomba] = valor_label
 
         # Contenedor derecho con scroll
         self.right_content = ctk.CTkFrame(
@@ -164,7 +146,7 @@ class ConfiguracionSistema(ctk.CTk):
         # Título "Bombas en uso"
         self.bombas_titulo = ctk.CTkLabel(
             self.right_content,
-            text="BOMBA EXISTENTES: ",
+            text="BOMBAS EXISTENTES: ",
             font=("Arial", 18, "bold"),
             anchor="w"
         )
@@ -179,23 +161,123 @@ class ConfiguracionSistema(ctk.CTk):
 
         # Cargar los actuadores desde la base de datos
         self.cargar_actuadores()
-        # Cargar últimos tiempos configurados
-        self.cargar_ultimos_tiempos()
+        # Cargar configuración de tiempos
+        self.cargar_configuracion_tiempos()
 
-    def cargar_ultimos_tiempos(self):
-        """Carga los últimos tiempos configurados desde la base de datos"""
+    def cargar_configuracion_tiempos(self):
+        """Carga las bombas existentes y sus tiempos de configuración"""
         db = self.conectar_db()
         if db:
             cursor = db.cursor(dictionary=True)
             try:
-                for bomba in self.opciones.keys():
-                    query = f"SELECT valor FROM configuracion_sistema WHERE parametro = '{bomba}' ORDER BY fecha_actualizacion DESC LIMIT 1"
-                    cursor.execute(query)
-                    resultado = cursor.fetchone()
-                    if resultado:
-                        self.recuadros_ultimos_datos[bomba].configure(text=f"{resultado['valor']} seg")
+                # Limpiar frames existentes
+                for widget in self.opciones_frame.winfo_children():
+                    widget.destroy()
+                
+                for widget in self.recuadros_frame.winfo_children():
+                    widget.destroy()
+                
+                self.opciones = {}
+                self.recuadros_ultimos_datos = {}
+                
+                # Obtener todas las bombas de la tabla actuadores
+                query = "SELECT * FROM actuadores WHERE tipo_actuador LIKE '%bomba%' OR tipo_actuador LIKE '%Bomba%'"
+                cursor.execute(query)
+                bombas = cursor.fetchall()
+                
+                if not bombas:
+                    label = ctk.CTkLabel(
+                        self.opciones_frame,
+                        text="No se encontraron bombas en la base de datos",
+                        text_color="gray"
+                    )
+                    label.pack(pady=20)
+                    return
+                
+                # Crear opciones para cada bomba encontrada
+                for i, bomba in enumerate(bombas):
+                    # Guardar datos de la bomba
+                    self.bombas_data[bomba['id_actuador']] = bomba
+                    
+                    # Frame para la opción de configuración
+                    frame_opcion = ctk.CTkFrame(
+                        self.opciones_frame, 
+                        fg_color=("gray90", "gray20"),
+                        corner_radius=8
+                    )
+                    frame_opcion.pack(fill="x", pady=6)
+
+                    # Nombre de la bomba
+                    label = ctk.CTkLabel(
+                        frame_opcion, 
+                        text=bomba['tipo_actuador'], 
+                        width=100, 
+                        anchor="w",
+                        font=("Arial", 14)
+                    )
+                    label.pack(side="left", padx=10, pady=8)
+                    
+                    # Campo de entrada para el tiempo
+                    entry = ctk.CTkEntry(
+                        frame_opcion, 
+                        width=100,
+                        placeholder_text="Segundos",
+                        justify="right"
+                    )
+                    # Si hay un tiempo configurado, mostrarlo
+                    if bomba['tencendido'] is not None:
+                        entry.insert(0, str(bomba['tencendido']))
+                    entry.pack(side="right", padx=10, pady=8)
+                    self.opciones[bomba['id_actuador']] = entry
+                    
+                    # Crear recuadro para mostrar último tiempo configurado
+                    frame_recuadro = ctk.CTkFrame(
+                        self.recuadros_frame,
+                        border_width=2,
+                        border_color="red",
+                        corner_radius=20,
+                        fg_color="white"
+                    )
+                    frame_recuadro.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
+                    self.recuadros_frame.grid_columnconfigure(i, weight=1)
+                    
+                    # Título de la bomba
+                    ctk.CTkLabel(
+                        frame_recuadro,
+                        text=bomba['tipo_actuador'],
+                        text_color="black",
+                        font=("Arial", 12, "bold")
+                    ).pack(pady=(8, 0))
+                    
+                    # Valor del tiempo
+                    valor_label = ctk.CTkLabel(
+                        frame_recuadro,
+                        text=f"{bomba['tencendido']} seg" if bomba['tencendido'] is not None else "N/A",
+                        text_color="black",
+                        font=("Arial", 14)
+                    )
+                    valor_label.pack(pady=(0, 8))
+                    
+                    self.recuadros_ultimos_datos[bomba['id_actuador']] = valor_label
+
+                # Botón de guardar con mejor diseño
+                save_button = ctk.CTkButton(
+                    self.opciones_frame, 
+                    text="Guardar Configuración", 
+                    command=self.guardar_cambios,
+                    corner_radius=8,
+                    height=40,
+                    font=("Arial", 14),
+                    fg_color=("#3A7EBF", "#1F538D"),
+                    hover_color=("#2D5F8B", "#14375F")
+                )
+                save_button.pack(pady=(10, 0), fill="x")
+
             except mysql.connector.Error as err:
-                messagebox.showwarning("Advertencia", f"No se pudieron cargar los últimos tiempos: {err}")
+                if not self.modal_abierto:
+                    self.modal_abierto = True
+                    Modal(self, "Error", f"No se pudieron cargar los tiempos: {err}")
+                    self.modal_abierto = False
             finally:
                 db.close()
 
@@ -250,32 +332,67 @@ class ConfiguracionSistema(ctk.CTk):
             text_color="white"
         )
         toggle_button.grid(row=0, column=2, padx=15, sticky="e")
-        toggle_button.configure(command=lambda a=actuador: self.toggle_info(a))
+        toggle_button.configure(command=lambda a=actuador: self.mostrar_detalles_actuador(a))
 
     def guardar_cambios(self):
+        if self.modal_abierto:
+            return
+            
         db = self.conectar_db()
         if db:
             cursor = db.cursor()
             try:
-                for bomba, entry in self.opciones.items():
+                for id_actuador, entry in self.opciones.items():
                     try:
-                        valor = float(entry.get())
-                        query = f"UPDATE configuracion_sistema SET valor = {valor}, fecha_actualizacion = NOW() WHERE parametro = '{bomba}'"
-                        cursor.execute(query)
+                        valor = float(entry.get()) if entry.get() else None
+                        query = "UPDATE actuadores SET tencendido = %s WHERE id_actuador = %s"
+                        cursor.execute(query, (valor, id_actuador))
                         db.commit()
+                        
                         # Actualizar el recuadro correspondiente
-                        self.recuadros_ultimos_datos[bomba].configure(text=f"{valor} seg")
+                        if id_actuador in self.recuadros_ultimos_datos:
+                            texto = f"{valor} seg" if valor is not None else "N/A"
+                            self.recuadros_ultimos_datos[id_actuador].configure(text=texto)
                     except ValueError:
-                        messagebox.showerror("Error", f"Valor inválido para {bomba}")
+                        if not self.modal_abierto:
+                            self.modal_abierto = True
+                            Modal(self, "Error", f"Valor inválido para {self.bombas_data[id_actuador]['tipo_actuador']}")
+                            self.modal_abierto = False
                         return
                 
-                messagebox.showinfo("Guardado", "Configuración actualizada correctamente.")
+                self.modal_abierto = True
+                Modal(self, "Éxito", "Configuración actualizada correctamente")
+                self.modal_abierto = False
+                
             except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"No se pudo guardar: {err}")
+                if not self.modal_abierto:
+                    self.modal_abierto = True
+                    Modal(self, "Error", f"No se pudo guardar: {err}")
+                    self.modal_abierto = False
             finally:
                 db.close()
 
-    # Resto de los métodos se mantienen igual...
+    def mostrar_detalles_actuador(self, actuador):
+        if self.modal_abierto:
+            return
+            
+        detalles = (
+            f"Tipo: {actuador['tipo_actuador']}\n"
+            f"Ubicación: {actuador['ubicacion']}\n"
+            f"Fecha instalación: {actuador['fecha_instalacion']}\n"
+            f"Estado: {actuador['estado']}\n"
+            f"Tiempo encendido: {actuador['tencendido'] if actuador['tencendido'] is not None else 'N/A'} seg"
+        )
+        
+        self.modal_abierto = True
+        modal = Modal(self, f"Detalles: {actuador['tipo_actuador']}", detalles)
+        # Configurar para que al cerrar el modal se resetee la variable
+        modal.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_modal(modal))
+
+    def cerrar_modal(self, modal):
+        modal.destroy()
+        self.modal_abierto = False
+
     def conectar_db(self):
         try:
             db = mysql.connector.connect(
@@ -286,7 +403,10 @@ class ConfiguracionSistema(ctk.CTk):
             )
             return db
         except mysql.connector.Error as err:
-            messagebox.showerror("Error", f"No se pudo conectar a la base de datos: {err}")
+            if not self.modal_abierto:
+                self.modal_abierto = True
+                Modal(self, "Error", f"No se pudo conectar a la base de datos: {err}")
+                self.modal_abierto = False
             return None
 
     def cargar_actuadores(self):
@@ -299,15 +419,6 @@ class ConfiguracionSistema(ctk.CTk):
             db.close()
             for actuador in actuadores:
                 self.crear_recuadro_bomba(actuador)
-
-    def toggle_info(self, actuador):
-        detalles = (
-            f"Tipo: {actuador['tipo_actuador']}\n"
-            f"Ubicación: {actuador['ubicacion']}\n"
-            f"Fecha instalación: {actuador['fecha_instalacion']}\n"
-            f"Estado: {actuador['estado']}"
-        )
-        messagebox.showinfo("Detalles del Actuador", detalles)
 
 if __name__ == "__main__":
     app = ConfiguracionSistema()
