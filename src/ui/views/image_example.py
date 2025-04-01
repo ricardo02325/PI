@@ -4,6 +4,7 @@ from PIL import Image
 from Graficas_sensores import iniciar_graficas
 from alertas import iniciar_alertas
 from Actuadoresbtn import crear_interfaz_actuadores
+from configtimeact import crear_configuracion_sistema  
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -24,10 +25,12 @@ class App(customtkinter.CTk):
                                                    dark_image=Image.open(os.path.join(image_path, "chat_light.png")), size=(20, 20))
         self.actuators_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home_dark.png")),
                                                       dark_image=Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
+        self.settings_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home_dark.png")),
+                                                    dark_image=Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
 
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
-        self.navigation_frame.grid_rowconfigure(5, weight=1)
+        self.navigation_frame.grid_rowconfigure(6, weight=1)  
 
         self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="  Sistema Hidropónico", image=self.logo_image,
                                                              compound="left", font=customtkinter.CTkFont(size=15, weight="bold"))
@@ -45,22 +48,36 @@ class App(customtkinter.CTk):
 
         self.actuators_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Actuadores",
                                                          fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                         image=self.alerts_image, anchor="w", command=self.actuators_button_event)
+                                                         image=self.actuators_image, anchor="w", command=self.actuators_button_event)
         self.actuators_button.grid(row=3, column=0, sticky="ew")
 
+        
+        self.bombas_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Configuración Bombas",
+                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                    image=self.settings_image, anchor="w", command=self.bombas_button_event)
+        self.bombas_button.grid(row=4, column=0, sticky="ew")
+
+        
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
         self.alerts_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.actuators_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.bombas_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
 
+        
         self.graficas_mostradas = False  
         self.alertas_mostradas = False 
+        self.bombas_config_mostrada = False
+        
         self.select_frame_by_name("home")
 
     def select_frame_by_name(self, name):
+        
         self.home_button.configure(fg_color=("gray75", "gray25") if name == "home" else "transparent")
         self.alerts_button.configure(fg_color=("gray75", "gray25") if name == "alerts" else "transparent")
         self.actuators_button.configure(fg_color=("gray75", "gray25") if name == "actuators" else "transparent")
+        self.bombas_button.configure(fg_color=("gray75", "gray25") if name == "bombas" else "transparent")
 
+        
         if name == "home":
             self.home_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
             if not self.graficas_mostradas:
@@ -83,6 +100,14 @@ class App(customtkinter.CTk):
         else:
             self.actuators_frame.grid_forget()
 
+        if name == "bombas":
+            self.bombas_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
+            if not self.bombas_config_mostrada:
+                crear_configuracion_sistema(self.bombas_frame)
+                self.bombas_config_mostrada = True
+        else:
+            self.bombas_frame.grid_forget()
+
     def home_button_event(self):
         self.select_frame_by_name("home")
 
@@ -91,6 +116,9 @@ class App(customtkinter.CTk):
     
     def actuators_button_event(self):
         self.select_frame_by_name("actuators")
+        
+    def bombas_button_event(self):
+        self.select_frame_by_name("bombas")
 
 if __name__ == "__main__":
     app = App()
