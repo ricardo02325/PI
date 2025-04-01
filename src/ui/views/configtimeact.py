@@ -1,13 +1,6 @@
-import sys
 import mysql.connector
 import customtkinter as ctk
 from datetime import datetime
-
-# Añadir el path al proyecto si es necesario
-sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
-
-ctk.set_appearance_mode("light")
-ctk.set_default_color_theme("blue")
 
 class Modal(ctk.CTkToplevel):
     def __init__(self, parent, title, message, width=400, height=200):
@@ -55,17 +48,34 @@ class Modal(ctk.CTkToplevel):
             hover_color=("#2D5F8B", "#14375F")
         ).pack(pady=(0, 15), padx=20, fill="x")
 
-class ConfiguracionSistema(ctk.CTk):
-    def __init__(self):
-        super().__init__()
-        self.title("Configuración del Sistema Hidropónico")
-        self.geometry("1200x700")
+class ConfiguracionSistema:
+    def __init__(self, parent=None):
+        """Inicializa la configuración del sistema.
         
-        # Variable para controlar si ya existe un modal abierto
+        Args:
+            parent: Ventana padre donde se mostrará la configuración (opcional)
+        """
+        self.parent = parent
         self.modal_abierto = False
+        
+        # Si no se proporciona un parent, creamos una nueva ventana
+        if parent is None:
+            self.window = ctk.CTk()
+            self.window.title("Configuración del Sistema Hidropónico")
+            self.window.geometry("1200x700")
+        else:
+            self.window = ctk.CTkToplevel(parent)
+            self.window.title("Configuración del Sistema Hidropónico")
+            self.window.geometry("1200x700")
+        
+        self.create_widgets()
+        self.cargar_actuadores()
+        self.cargar_configuracion_tiempos()
 
+    def create_widgets(self):
+        """Crea todos los widgets de la interfaz."""
         # Frame principal
-        self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Título principal centrado con emoji de engranaje
@@ -158,11 +168,6 @@ class ConfiguracionSistema(ctk.CTk):
             fg_color="transparent"
         )
         self.bombas_frame.pack(fill="both", expand=True)
-
-        # Cargar los actuadores desde la base de datos
-        self.cargar_actuadores()
-        # Cargar configuración de tiempos
-        self.cargar_configuracion_tiempos()
 
     def cargar_configuracion_tiempos(self):
         """Carga las bombas existentes y sus tiempos de configuración"""
@@ -276,7 +281,7 @@ class ConfiguracionSistema(ctk.CTk):
             except mysql.connector.Error as err:
                 if not self.modal_abierto:
                     self.modal_abierto = True
-                    Modal(self, "Error", f"No se pudieron cargar los tiempos: {err}")
+                    Modal(self.window, "Error", f"No se pudieron cargar los tiempos: {err}")
                     self.modal_abierto = False
             finally:
                 db.close()
@@ -356,18 +361,18 @@ class ConfiguracionSistema(ctk.CTk):
                     except ValueError:
                         if not self.modal_abierto:
                             self.modal_abierto = True
-                            Modal(self, "Error", f"Valor inválido para {self.bombas_data[id_actuador]['tipo_actuador']}")
+                            Modal(self.window, "Error", f"Valor inválido para {self.bombas_data[id_actuador]['tipo_actuador']}")
                             self.modal_abierto = False
                         return
                 
                 self.modal_abierto = True
-                Modal(self, "Éxito", "Configuración actualizada correctamente")
+                Modal(self.window, "Éxito", "Configuración actualizada correctamente")
                 self.modal_abierto = False
                 
             except mysql.connector.Error as err:
                 if not self.modal_abierto:
                     self.modal_abierto = True
-                    Modal(self, "Error", f"No se pudo guardar: {err}")
+                    Modal(self.window, "Error", f"No se pudo guardar: {err}")
                     self.modal_abierto = False
             finally:
                 db.close()
@@ -385,7 +390,7 @@ class ConfiguracionSistema(ctk.CTk):
         )
         
         self.modal_abierto = True
-        modal = Modal(self, f"Detalles: {actuador['tipo_actuador']}", detalles)
+        modal = Modal(self.window, f"Detalles: {actuador['tipo_actuador']}", detalles)
         # Configurar para que al cerrar el modal se resetee la variable
         modal.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_modal(modal))
 
@@ -405,7 +410,7 @@ class ConfiguracionSistema(ctk.CTk):
         except mysql.connector.Error as err:
             if not self.modal_abierto:
                 self.modal_abierto = True
-                Modal(self, "Error", f"No se pudo conectar a la base de datos: {err}")
+                Modal(self.window, "Error", f"No se pudo conectar a la base de datos: {err}")
                 self.modal_abierto = False
             return None
 
@@ -420,6 +425,12 @@ class ConfiguracionSistema(ctk.CTk):
             for actuador in actuadores:
                 self.crear_recuadro_bomba(actuador)
 
+    def run(self):
+        """Ejecuta la ventana de configuración."""
+        if self.parent is None:
+            self.window.mainloop()
+
 if __name__ == "__main__":
+    # Ejemplo de uso independiente
     app = ConfiguracionSistema()
-    app.mainloop()
+    app.run()
