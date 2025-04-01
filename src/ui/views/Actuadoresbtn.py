@@ -34,10 +34,13 @@ def crear_interfaz_actuadores(root):
         estados = obtener_estados()
         
         for i, estado in enumerate(estados):
-            color = "red" if estado == "Inactivo" else "green"
-            indicadores[i].configure(fg_color=color)
-            botones[i].configure(text="Encender" if estado == "Inactivo" else "Apagar")
-        
+            color = "#E74C3C" if estado == "Inactivo" else "#2ECC71"  # Rojo o Verde moderno
+            boton_text = "Encender" if estado == "Inactivo" else "Apagar"
+            boton_color = "#3498DB" if estado == "Inactivo" else "#E74C3C"  # Azul o Rojo moderno
+
+            indicadores[i].configure(fg_color=color, border_color="white" if estado == "Activo" else "#ccc", border_width=3)
+            botones[i].configure(text=boton_text, fg_color=boton_color, hover_color="#2980B9" if estado == "Inactivo" else "#C0392B")
+
         root.after(5000, actualizar_estados)
 
     def cambiar_estado(indice):
@@ -64,32 +67,36 @@ def crear_interfaz_actuadores(root):
         except mysql.connector.Error as err:
             print(f"Error al actualizar el estado: {err}")
 
-    # Configuración de la interfaz en el contenedor root
+    # Configuración de la interfaz
     root.grid_rowconfigure((0, 1, 2), weight=1)
     root.grid_columnconfigure((0, 1), weight=1)
 
-    # Título centrado con emoji (AUMENTADO)
-    titulo = ctk.CTkLabel(root, text="⚙ CONTROL DE ACTUADORES ⚙", font=("Arial", 32, "bold"))
+    # Título centrado con icono
+    titulo = ctk.CTkLabel(root, text=" CONTROL DE ACTUADORES ", font=("Arial", 32, "bold"))
     titulo.grid(row=0, column=0, columnspan=2, pady=20)
 
-    # Creación de los recuadros y botones
+    # Creación de los recuadros con estilo moderno
     global indicadores, botones
     indicadores = []
     botones = []
 
     for i in range(4):
-        frame = ctk.CTkFrame(root, width=250, height=180, fg_color="white")
+        frame = ctk.CTkFrame(root, width=250, height=150, fg_color="#f8f9fa", 
+                             corner_radius=15, border_width=2, border_color="#BDC3C7")
         frame.grid(row=(i // 2) + 1, column=i % 2, padx=15, pady=15, sticky="nsew")
         
-        # Usamos pack para centrar los elementos
-        nombre_label = ctk.CTkLabel(frame, text=bomba_nombres[i], font=("Arial", 18, "bold"), text_color="black")
+        # Etiqueta de nombre
+        nombre_label = ctk.CTkLabel(frame, text=bomba_nombres[i], font=("Arial", 18, "bold"), text_color="#2C3E50")
         nombre_label.pack(pady=10, anchor="center")
         
-        indicador = ctk.CTkFrame(frame, width=50, height=50, fg_color="red", corner_radius=25)
+        # Indicador de estado con borde blanco brillante si está activo
+        indicador = ctk.CTkFrame(frame, width=50, height=50, fg_color="#E74C3C", corner_radius=25, border_width=3, border_color="#ccc")
         indicador.pack(pady=10, anchor="center")
         
+        # Botón moderno con hover y sombra ligera
         boton = ctk.CTkButton(frame, text="Cargando...", command=lambda i=i: cambiar_estado(i), 
-                              fg_color="blue", font=("Arial", 20), width=150, height=50)
+                              fg_color="#3498DB", hover_color="#2980B9", font=("Arial", 20, "bold"), 
+                              text_color="white", corner_radius=8, width=160, height=50)
         boton.pack(pady=10, anchor="center")
         
         indicadores.append(indicador)
