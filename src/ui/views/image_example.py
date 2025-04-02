@@ -17,17 +17,41 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
-        self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")), size=(26, 26))
-        self.home_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home.png")),
-                                                 dark_image=Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
-        self.alerts_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "chat_dark.png")),
-                                                   dark_image=Image.open(os.path.join(image_path, "chat_light.png")), size=(20, 20))
-        self.actuators_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home_dark.png")),
-                                                      dark_image=Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
-        self.settings_image = customtkinter.CTkImage(light_image=Image.open(os.path.join(image_path, "home_dark.png")),
-                                                    dark_image=Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
+        # Definir el tamaño de los iconos
+        icon_size = (32, 32)
 
+        # Ruta de las imágenes
+        image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
+
+        # Cargar imágenes con el mismo tamaño
+        self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")).resize(icon_size, Image.LANCZOS))
+
+        self.home_image = customtkinter.CTkImage(
+            light_image=Image.open(os.path.join(image_path, "home.png")).resize(icon_size, Image.LANCZOS),
+            dark_image=Image.open(os.path.join(image_path, "home_light.png")).resize(icon_size, Image.LANCZOS),
+            size=icon_size
+        )
+        
+        self.alerts_image = customtkinter.CTkImage(
+            light_image=Image.open(os.path.join(image_path, "alert.png")).resize(icon_size, Image.LANCZOS),
+            dark_image=Image.open(os.path.join(image_path, "chat_light.png")).resize(icon_size, Image.LANCZOS),
+            size=icon_size
+        )
+
+        self.actuators_image = customtkinter.CTkImage(
+            light_image=Image.open(os.path.join(image_path, "actuadores.png")).resize(icon_size, Image.LANCZOS),
+            dark_image=Image.open(os.path.join(image_path, "actuadores.png")).resize(icon_size, Image.LANCZOS),
+            size=icon_size
+        )
+
+        self.settings_image = customtkinter.CTkImage(
+            light_image=Image.open(os.path.join(image_path, "settings.png")).resize(icon_size, Image.LANCZOS),
+            dark_image=Image.open(os.path.join(image_path, "settings.png")).resize(icon_size, Image.LANCZOS),
+            size=icon_size
+        )
+
+
+        # Crear panel de navegación
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
         self.navigation_frame.grid_rowconfigure(6, weight=1)  
@@ -36,78 +60,73 @@ class App(customtkinter.CTk):
                                                              compound="left", font=customtkinter.CTkFont(size=15, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
-        self.home_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Inicio",
-                                                   fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                   image=self.home_image, anchor="w", command=self.home_button_event)
-        self.home_button.grid(row=1, column=0, sticky="ew")
+        # Botones del menú
+        self.home_button = self.create_nav_button("Inicio", self.home_image, self.home_button_event, 1)
+        self.alerts_button = self.create_nav_button("Alertas", self.alerts_image, self.alerts_button_event, 2)
+        self.actuators_button = self.create_nav_button("Actuadores", self.actuators_image, self.actuators_button_event, 3)
+        self.bombas_button = self.create_nav_button("Configuración Bombas", self.settings_image, self.bombas_button_event, 4)
 
-        self.alerts_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Alertas",
-                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                      image=self.alerts_image, anchor="w", command=self.alerts_button_event)
-        self.alerts_button.grid(row=2, column=0, sticky="ew")
-
-        self.actuators_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Actuadores",
-                                                         fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                         image=self.actuators_image, anchor="w", command=self.actuators_button_event)
-        self.actuators_button.grid(row=3, column=0, sticky="ew")
-
-        
-        self.bombas_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Configuración Bombas",
-                                                    fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                    image=self.settings_image, anchor="w", command=self.bombas_button_event)
-        self.bombas_button.grid(row=4, column=0, sticky="ew")
-
-        
+        # Frames de contenido
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
         self.alerts_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.actuators_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.bombas_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
 
-        
+        # Variables de control
         self.graficas_mostradas = False  
         self.alertas_mostradas = False 
         self.bombas_config_mostrada = False
         
         self.select_frame_by_name("home")
 
+    def create_nav_button(self, text, image, command, row):
+        """ Crea un botón de navegación en el menú lateral """
+        button = customtkinter.CTkButton(
+            self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=text,
+            fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+            image=image, anchor="w", command=command
+        )
+        button.grid(row=row, column=0, sticky="ew")
+        return button
+
     def select_frame_by_name(self, name):
-        
+        """ Activa el frame correspondiente y oculta los demás """
+
         self.home_button.configure(fg_color=("gray75", "gray25") if name == "home" else "transparent")
         self.alerts_button.configure(fg_color=("gray75", "gray25") if name == "alerts" else "transparent")
         self.actuators_button.configure(fg_color=("gray75", "gray25") if name == "actuators" else "transparent")
         self.bombas_button.configure(fg_color=("gray75", "gray25") if name == "bombas" else "transparent")
 
-        
         if name == "home":
-            self.home_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-            if not self.graficas_mostradas:
-                iniciar_graficas(self.home_frame) 
-                self.graficas_mostradas = True
+            self.show_frame(self.home_frame, iniciar_graficas, self.graficas_mostradas)
+            self.graficas_mostradas = True
         else:
             self.home_frame.grid_forget()
 
         if name == "alerts":
-            self.alerts_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-            if not self.alertas_mostradas: 
-                iniciar_alertas(self.alerts_frame)
-                self.alertas_mostradas = True
+            self.show_frame(self.alerts_frame, iniciar_alertas, self.alertas_mostradas)
+            self.alertas_mostradas = True
         else:
             self.alerts_frame.grid_forget()
 
         if name == "actuators":
-            self.actuators_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-            crear_interfaz_actuadores(self.actuators_frame)
+            self.show_frame(self.actuators_frame, crear_interfaz_actuadores)
         else:
             self.actuators_frame.grid_forget()
 
         if name == "bombas":
-            self.bombas_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
-            if not self.bombas_config_mostrada:
-                crear_configuracion_sistema(self.bombas_frame)
-                self.bombas_config_mostrada = True
+            self.show_frame(self.bombas_frame, crear_configuracion_sistema, self.bombas_config_mostrada)
+            self.bombas_config_mostrada = True
         else:
             self.bombas_frame.grid_forget()
 
+    def show_frame(self, frame, func=None, flag=None):
+        """ Muestra un frame y ejecuta su función si es la primera vez """
+        frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
+        if func and not flag:
+            func(frame)
+
+    # Eventos de los botones del menú
     def home_button_event(self):
         self.select_frame_by_name("home")
 
