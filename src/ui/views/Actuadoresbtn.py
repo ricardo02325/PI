@@ -104,3 +104,4 @@ def crear_interfaz_actuadores(root):
 
     # Cargar estados iniciales
     actualizar_estados()
+    
