@@ -5,7 +5,7 @@ from Graficas_sensores import iniciar_graficas
 from alertas import iniciar_alertas
 from Actuadoresbtn import crear_interfaz_actuadores
 from configtimeact import crear_configuracion_sistema
-from mantenimiento import MantenimientoApp
+from mantenimiento import MantenimientoFrame  # Importamos la clase MantenimientoFrame
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -67,14 +67,14 @@ class App(customtkinter.CTk):
         self.alerts_button = self.create_nav_button("Alertas", self.alerts_image, self.alerts_button_event, 2)
         self.actuators_button = self.create_nav_button("Actuadores", self.actuators_image, self.actuators_button_event, 3)
         self.bombas_button = self.create_nav_button("Configuración Bombas", self.settings_image, self.bombas_button_event, 4)
-        self.maintenance_button = self.create_nav_button("Mantenimiento", self.maintenance_image, self.mantenimiento_button_event, 5)  # NUEVO
+        self.maintenance_button = self.create_nav_button("Mantenimiento", self.maintenance_image, self.mantenimiento_button_event, 5)
 
         # Frames de contenido
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
         self.alerts_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.actuators_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.bombas_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  
-        self.maintenance_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  # NUEVO
+        self.maintenance_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
 
         self.graficas_mostradas = False  
         self.alertas_mostradas = False 
@@ -123,8 +123,7 @@ class App(customtkinter.CTk):
             self.bombas_frame.grid_forget()
 
         if name == "mantenimiento":
-            self.show_frame(self.maintenance_frame, MantenimientoApp, self.mantenimiento_mostrado)
-            self.mantenimiento_mostrado = True
+            self.show_mantenimiento_frame()
         else:
             self.maintenance_frame.grid_forget()
 
@@ -132,6 +131,24 @@ class App(customtkinter.CTk):
         frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
         if func and not flag:
             func(frame)
+
+    def show_mantenimiento_frame(self):
+        # Limpiamos el frame de mantenimiento si ya tiene widgets
+        for widget in self.maintenance_frame.winfo_children():
+            widget.destroy()
+        
+        # Creamos y mostramos el frame de mantenimiento
+        self.maintenance_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
+        
+        # Configuramos el grid para que el frame de mantenimiento se expanda
+        self.maintenance_frame.grid_rowconfigure(0, weight=1)
+        self.maintenance_frame.grid_columnconfigure(0, weight=1)
+        
+        # Creamos el módulo de mantenimiento dentro del frame
+        mantenimiento = MantenimientoFrame(self.maintenance_frame)
+        mantenimiento.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        
+        self.mantenimiento_mostrado = True
 
     def home_button_event(self):
         self.select_frame_by_name("home")
