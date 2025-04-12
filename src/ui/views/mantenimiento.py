@@ -4,16 +4,12 @@ from mysql.connector import Error
 from datetime import date
 from tkinter import ttk, messagebox
 
-class MantenimientoApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Sistema de Mantenimiento Hidropónico")
-        self.root.geometry("1000x700")
-        self.root.configure(bg="white")
+class MantenimientoFrame(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
         
-        # Configuración de estilo
-        ctk.set_appearance_mode("light")
-        ctk.set_default_color_theme("blue")
+        # Configuración inicial
+        self.configure(fg_color="white")
         
         # Conectar a la base de datos
         self.connection = self.connect_to_database()
@@ -39,13 +35,9 @@ class MantenimientoApp:
             return None
     
     def create_widgets(self):
-        # Frame principal
-        self.main_frame = ctk.CTkFrame(self.root, fg_color="white")
-        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
         # Título
         self.title_label = ctk.CTkLabel(
-            self.main_frame, 
+            self, 
             text="Gestión de Mantenimientos",
             font=("Helvetica", 20, "bold"),
             text_color="#2A8C55"
@@ -54,7 +46,7 @@ class MantenimientoApp:
         
         # Frame de formulario
         self.form_frame = ctk.CTkFrame(
-            self.main_frame, 
+            self, 
             fg_color="#F5F5F5",
             border_width=1,
             border_color="#E0E0E0",
@@ -67,7 +59,7 @@ class MantenimientoApp:
         
         # Frame de la tabla
         self.table_frame = ctk.CTkFrame(
-            self.main_frame, 
+            self, 
             fg_color="white",
             border_width=1,
             border_color="#E0E0E0",
@@ -306,7 +298,7 @@ class MantenimientoApp:
         values = item_data["values"]
         
         # Crear ventana de edición
-        edit_window = ctk.CTkToplevel(self.root)
+        edit_window = ctk.CTkToplevel(self.master)
         edit_window.title("Editar Mantenimiento")
         edit_window.geometry("500x400")
         edit_window.grab_set()
@@ -385,7 +377,17 @@ class MantenimientoApp:
         if hasattr(self, 'connection') and self.connection:
             self.connection.close()
 
+# Función para crear y retornar el frame de mantenimiento
+def crear_modulo_mantenimiento(master):
+    return MantenimientoFrame(master)
+
+# Ejemplo de uso en tu aplicación principal
 if __name__ == "__main__":
     root = ctk.CTk()
-    app = MantenimientoApp(root)
+    root.geometry("1000x700")
+    
+    # Crear el frame de mantenimiento
+    mantenimiento_frame = MantenimientoFrame(root)
+    mantenimiento_frame.pack(fill="both", expand=True, padx=20, pady=20)
+    
     root.mainloop()
