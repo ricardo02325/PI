@@ -3,60 +3,76 @@ import os
 from notifypy import Notify
 import threading
 
+# Ruta al archivo JSON (relativa a este archivo)
 base_path = os.path.dirname(__file__)
 json_file = os.path.join(base_path, "notificados.json")
 
-
-def verificar_notificaciones():
+# Función para resetear alertas
+def reset_alerta(numero=None):
     if os.path.exists(json_file):
         with open(json_file, "r") as file:
-            notificados = json.load(file)
+            data = json.load(file)
     else:
-        notificados = {"8": False, "9": False, "10": False}
-        with open(json_file, "w") as file:
-            json.dump(notificados, file, indent=4)
+        print("⚠️ El archivo JSON no existe.")
+        return
 
-    notification = Notify()
-    notification.title = "Alerta"
-    notification.audio = os.path.join(base_path, "sonido_alertas.wav")
-    notification.icon = os.path.join(base_path, "test_images", "noti.png")
-
-    alguna_noti = False
-    for numero, fue_notificado in notificados.items():
-        if not fue_notificado:
-            print(f"🔔 Enviando notificación para número {numero}")
-            notification.message = f"La conductividad eléctrica para número {numero} está muy alta"
-            notification.send()
-            notificados[numero] = True
-            alguna_noti = True
-
-    if alguna_noti:
-        with open(json_file, "w") as file:
-            json.dump(notificados, file, indent=4)
-
-
-def reiniciar_notificaciones():
-    """Pone todos los valores en False cada 5 segundos."""
-    if os.path.exists(json_file):
-        with open(json_file, "r") as file:
-            notificados = json.load(file)
+    if numero is None:
+        for key in data:
+            data[key] = False
+        print("🔁 Todas las alertas han sido reiniciadas.")
     else:
-        notificados = {"8": False, "9": False, "10": False}
+        if str(numero) in data:
+            data[str(numero)] = False
+            print(f"🔁 Alerta {numero} reiniciada.")
+        else:
+            print(f"⚠️ Alerta {numero} no encontrada en el archivo.")
 
-    reiniciado = False
-    for numero in notificados:
-        if notificados[numero] is not False:
-            notificados[numero] = False
-            reiniciado = True
+    with open(json_file, "w") as file:
+        json.dump(data, file, indent=4)
 
-    if reiniciado:
-        with open(json_file, "w") as file:
-            json.dump(notificados, file, indent=4)
-        print("♻️ Notificaciones reiniciadas a False")
+# -------------------------------------
+# MAIN - Verificar notificaciones
+# -------------------------------------
 
-    # Ejecutar esta función de nuevo en 5 segundos
-    threading.Timer(5.0, reiniciar_notificaciones).start()
+# Cargar archivo JSON
+if os.path.exists(json_file):
+    with open(json_file, "r") as file:
+        notificados = json.load(file)
+else:
+    # Crear archivo si no existe (puedes personalizar los números)
+    notificados = {
+        "8": False,
+        "9": False,
+        "10": False
+    }
+    with open(json_file, "w") as file:
+        json.dump(notificados, file, indent=4)
 
+# Mostrar contenido actual del archivo
+print("📄 Contenido de notificados.json:")
+print(json.dumps(notificados, indent=4))
 
-# Iniciar el reinicio periódico (una sola vez al arrancar)
-reiniciar_notificaciones()
+# Configurar notificación
+notification = Notify()
+notification.title = "Alerta"
+notification.audio = os.path.join(base_path, "sonido_alertas.wav")
+notification.icon = os.path.join(base_path, "test_images", "noti.png")
+
+# Evaluar y notificar todos los que están en false
+alguna_noti = False
+for numero, fue_notificado in notificados.items():
+    print(f"🔎 Revisando número {numero} - notificado: {fue_notificado}")
+
+    if not fue_notificado:
+        print(f"🔔 Enviando notificación para número {numero}")
+        notification.message = f"La conductividad eléctrica para número {numero} está muy alta"
+        notification.send()
+        alguna_noti = True
+
+        # Marcar como notificado
+        notificados[numero] = True
+
+# Guardar todos los cambios una sola vez
+if alguna_noti:
+    with open(json_file, "w") as file:
+        json.dump(notificados, file, indent=4)
