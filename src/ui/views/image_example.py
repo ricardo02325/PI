@@ -6,7 +6,7 @@ from alertas import iniciar_alertas
 from Actuadoresbtn import crear_interfaz_actuadores
 from configtimeact import crear_configuracion_sistema
 from mantenimiento import MantenimientoFrame
-from notificaciones import verificar_notificaciones
+# from notificaciones import verificar_notificaciones
 
 
 class App(customtkinter.CTk):
@@ -87,12 +87,12 @@ class App(customtkinter.CTk):
 
         self.select_frame_by_name("home")
 
-        # Iniciar verificación periódica de notificaciones
-        self.after(2000, self.comprobar_notificaciones)
+    #     # Iniciar verificación periódica de notificaciones
+    #     self.after(2000, self.comprobar_notificaciones)
 
-    def comprobar_notificaciones(self):
-        verificar_notificaciones()
-        self.after(2000, self.comprobar_notificaciones)
+    # def comprobar_notificaciones(self):
+    #     verificar_notificaciones()
+    #     self.after(2000, self.comprobar_notificaciones)
 
     def create_nav_button(self, text, image, command, row):
         button = customtkinter.CTkButton(
