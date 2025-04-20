@@ -23,14 +23,15 @@ def verificar_notificaciones():
 
     alguna_noti = False
 
-    # Iterar sobre los registros y enviar notificación si `notify` es false
-    for registro in notificados:
-        if not registro.get("notify", False):  # Si no ha sido notificado
-            print(f"🔔 Enviando notificación para ID {registro['id']}")
-            notification.message = f"{registro['message']} - {registro['date']}"
-            notification.send()
-            registro["notify"] = True
-            alguna_noti = True
+    # Iterar sobre grupos y registros dentro de cada grupo
+    for grupo_id, alertas in notificados.items():
+        for alerta_id, registro in alertas.items():
+            if not registro.get("notify", False):  # Si no ha sido notificado
+                print(f"🔔 Enviando notificación del grupo {grupo_id} para ID {registro['id']}")
+                notification.message = f"{registro['message']} - {registro['date']}"
+                notification.send()
+                registro["notify"] = True
+                alguna_noti = True
 
     # Guardar los cambios en el archivo JSON solo si hubo notificaciones
     if alguna_noti:
