@@ -1,5 +1,62 @@
-{
-    "8": false,
-    "9": false,
-    "10": false
-}
+[
+    {
+        "id": 1,
+        "message": "Notificado 1",
+        "notify": true,
+        "date": "2023-10-01"
+    },
+    {
+        "id": 2,
+        "message": "Notificado 2",
+        "notify": true,
+        "date": "2023-10-02"
+    },
+    {
+        "id": 3,
+        "message": "Notificado 3",
+        "notify": true,
+        "date": "2023-10-03"
+    },
+    {
+        "id": 4,
+        "message": "Notificado 4",
+        "notify": true,
+        "date": "2023-10-04"
+    },
+    {
+        "id": 5,
+        "message": "Notificado 5",
+        "notify": true,
+        "date": "2023-10-05"
+    },
+    {
+        "id": 6,
+        "message": "Notificado 6",
+        "notify": true,
+        "date": "2023-10-06"
+    },
+    {
+        "id": 7,
+        "message": "Notificado 7",
+        "notify": true,
+        "date": "2023-10-07"
+    },
+    {
+        "id": 8,
+        "message": "Notificado 8",
+        "notify": true,
+        "date": "2023-10-08"
+    },
+    {
+        "id": 9,
+        "message": "Notificado 9",
+        "notify": true,
+        "date": "2023-10-09"
+    },
+    {
+        "id": 10,
+        "message": "Notificado 10",
+        "notify": true,
+        "date": "2023-10-10"
+    }
+]
