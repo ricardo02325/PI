@@ -2,6 +2,8 @@ import json
 from notifypy import Notify
 import os
 
+# Comentario xD
+
 def verificar_notificaciones():
     # Ruta del archivo JSON
     base_path = os.path.dirname(__file__)
