@@ -143,7 +143,7 @@ class App(customtkinter.CTk):
         # Configuramos el grid para que el frame de mantenimiento se expanda
         self.maintenance_frame.grid_rowconfigure(0, weight=1)
         self.maintenance_frame.grid_columnconfigure(0, weight=1)
-        ''
+        3
         # Creamos el módulo de mantenimiento dentro del frame
         mantenimiento = MantenimientoFrame(self.maintenance_frame)
         mantenimiento.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
