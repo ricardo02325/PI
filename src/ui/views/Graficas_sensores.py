@@ -1,5 +1,5 @@
 import sys
-import mysql.connector
+import mysql.connector  
 import pandas as pd
 import matplotlib.pyplot as plt
 import customtkinter as ctk

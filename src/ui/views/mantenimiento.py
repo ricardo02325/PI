@@ -27,7 +27,7 @@ class MantenimientoFrame(ctk.CTkFrame):
                 host='localhost',
                 database='sistema_hidroponico',
                 user='root',
-                password=''  # Agrega tu contraseña si es necesaria
+                password=''
             )
             return connection
         except Error as e:
@@ -134,6 +134,7 @@ class MantenimientoFrame(ctk.CTkFrame):
             font=("Helvetica", 12),
             dropdown_font=("Helvetica", 12)
         )
+        self.estado_combobox.set("Pendiente")
         self.estado_combobox.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
         
         # Botón de guardar
@@ -163,33 +164,41 @@ class MantenimientoFrame(ctk.CTkFrame):
                        fieldbackground="#FFFFFF",
                        bordercolor="#E0E0E0",
                        borderwidth=1)
-        style.map('Treeview', background=[('selected', '#2A8C55')])
+        style.map('Treeview', 
+                 background=[('selected', '#2A8C55')],
+                 foreground=[('selected', 'white')])
         
         style.configure("Treeview.Heading", 
-                        background="#2A8C55",
-                        foreground="white",
-                        font=('Helvetica', 12, 'bold'))
+                      background="#2A8C55",
+                      foreground="white",
+                      font=('Helvetica', 12, 'bold'))
         
         # Crear el Treeview
         self.tree = ttk.Treeview(
             self.table_frame,
-            columns=("id", "usuario", "fecha", "descripcion", "estado"),
-            show="headings",
-            style="Treeview"
+            columns=("id", "usuario", "fecha", "descripcion", "estado", "acciones"),
+            show="headings"
         )
         
         # Configurar columnas
-        self.tree.heading("id", text="ID")
-        self.tree.heading("usuario", text="Usuario")
-        self.tree.heading("fecha", text="Fecha")
-        self.tree.heading("descripcion", text="Descripción")
-        self.tree.heading("estado", text="Estado")
+        columns_config = [
+            ("id", "ID", 50, "center"),
+            ("usuario", "Usuario", 150, "w"),
+            ("fecha", "Fecha", 100, "center"),
+            ("descripcion", "Descripción", 350, "w"),
+            ("estado", "Estado", 100, "center"),
+            ("acciones", "Acciones", 100, "center")
+        ]
         
-        self.tree.column("id", width=50, anchor="center")
-        self.tree.column("usuario", width=150, anchor="w")
-        self.tree.column("fecha", width=100, anchor="center")
-        self.tree.column("descripcion", width=400, anchor="w")
-        self.tree.column("estado", width=100, anchor="center")
+        for col, text, width, anchor in columns_config:
+            self.tree.heading(col, text=text)
+            self.tree.column(col, width=width, anchor=anchor)
+        
+        # Configurar estilo para acciones
+        self.tree.tag_configure('action', foreground='blue', font=('Helvetica', 10, 'underline'))
+        
+        # Configurar evento de click
+        self.tree.bind("<Button-1>", self.on_tree_click)
         
         # Scrollbar
         scrollbar = ttk.Scrollbar(self.table_frame, orient="vertical", command=self.tree.yview)
@@ -198,9 +207,18 @@ class MantenimientoFrame(ctk.CTkFrame):
         # Empaquetar
         self.tree.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+    
+    def on_tree_click(self, event):
+        # Identificar qué se clickeó
+        region = self.tree.identify("region", event.x, event.y)
+        column = self.tree.identify("column", event.x, event.y)
+        item = self.tree.identify("item", event.x, event.y)
         
-        # Doble click para editar
-        self.tree.bind("<Double-1>", self.edit_mantenimiento)
+        # Si se clickeó en la columna de acciones
+        if region == "cell" and column == "#6":
+            values = self.tree.item(item)["values"]
+            if values:  # Asegurarse que hay valores
+                self.edit_mantenimiento(values[0])
     
     def load_usuarios(self):
         if not self.connection:
@@ -244,11 +262,13 @@ class MantenimientoFrame(ctk.CTkFrame):
             # Insertar datos
             for m in mantenimientos:
                 self.tree.insert("", "end", 
-                                values=(m["id_mantenimiento"],
-                                       f"{m['id_usuario']} - {m['nombre']}",
-                                       m["fecha_mantenimiento"],
-                                       m["descripcion"],
-                                       m["estado_tarea"]))
+                               values=(m["id_mantenimiento"],
+                                      f"{m['id_usuario']} - {m['nombre']}",
+                                      m["fecha_mantenimiento"],
+                                      m["descripcion"],
+                                      m["estado_tarea"],
+                                      "Editar"),
+                               tags=('action',))
             
         except Error as e:
             messagebox.showerror("Error", f"Error al cargar mantenimientos: {e}")
@@ -288,106 +308,120 @@ class MantenimientoFrame(ctk.CTkFrame):
         except Error as e:
             messagebox.showerror("Error", f"Error al guardar mantenimiento: {e}")
     
-    def edit_mantenimiento(self, event):
-        # Obtener item seleccionado
-        selected_item = self.tree.selection()
-        if not selected_item:
+    def edit_mantenimiento(self, mantenimiento_id):
+        if not self.connection:
             return
             
-        item_data = self.tree.item(selected_item)
-        values = item_data["values"]
-        
-        # Crear ventana de edición
-        edit_window = ctk.CTkToplevel(self.master)
-        edit_window.title("Editar Mantenimiento")
-        edit_window.geometry("500x400")
-        edit_window.grab_set()
-        
-        # ID (no editable)
-        ctk.CTkLabel(edit_window, text="ID:").pack(pady=(10, 0))
-        id_entry = ctk.CTkEntry(edit_window, state="readonly")
-        id_entry.pack(fill="x", padx=20)
-        id_entry.configure(state="normal")
-        id_entry.insert(0, values[0])
-        id_entry.configure(state="readonly")
-        
-        # Usuario (no editable)
-        ctk.CTkLabel(edit_window, text="Usuario:").pack(pady=(10, 0))
-        usuario_entry = ctk.CTkEntry(edit_window, state="readonly")
-        usuario_entry.pack(fill="x", padx=20)
-        usuario_entry.insert(0, values[1])
-        
-        # Fecha
-        ctk.CTkLabel(edit_window, text="Fecha:").pack(pady=(10, 0))
-        fecha_entry = ctk.CTkEntry(edit_window)
-        fecha_entry.pack(fill="x", padx=20)
-        fecha_entry.insert(0, values[2])
-        
-        # Descripción
-        ctk.CTkLabel(edit_window, text="Descripción:").pack(pady=(10, 0))
-        descripcion_text = ctk.CTkTextbox(edit_window, height=100)
-        descripcion_text.pack(fill="x", padx=20, pady=(0, 10))
-        descripcion_text.insert("1.0", values[3])
-        
-        # Estado
-        ctk.CTkLabel(edit_window, text="Estado:").pack(pady=(10, 0))
-        estado_combobox = ctk.CTkComboBox(
-            edit_window,
-            values=["Pendiente", "En progreso", "Completado", "Cancelado"]
-        )
-        estado_combobox.pack(fill="x", padx=20, pady=(0, 10))
-        estado_combobox.set(values[4])
-        
-        # Botón de guardar
-        def update_mantenimiento():
-            try:
-                cursor = self.connection.cursor()
-                query = """
-                UPDATE mantenimiento 
-                SET fecha_mantenimiento = %s, 
-                    descripcion = %s, 
-                    estado_tarea = %s
-                WHERE id_mantenimiento = %s
-                """
-                cursor.execute(query, (
-                    fecha_entry.get(),
-                    descripcion_text.get("1.0", "end-1c"),
-                    estado_combobox.get(),
-                    values[0]
-                ))
-                self.connection.commit()
-                
-                messagebox.showinfo("Éxito", "Mantenimiento actualizado correctamente")
-                edit_window.destroy()
-                self.load_mantenimientos()
-                
-            except Error as e:
-                messagebox.showerror("Error", f"Error al actualizar mantenimiento: {e}")
-        
-        save_button = ctk.CTkButton(
-            edit_window,
-            text="Guardar Cambios",
-            command=update_mantenimiento,
-            fg_color="#2A8C55",
-            hover_color="#207244"
-        )
-        save_button.pack(pady=10)
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            query = """
+            SELECT m.id_mantenimiento, m.fecha_mantenimiento, m.descripcion, m.estado_tarea, 
+                   u.id_usuario, u.nombre
+            FROM mantenimiento m
+            JOIN usuarios u ON m.id_usuario = u.id_usuario
+            WHERE m.id_mantenimiento = %s
+            """
+            cursor.execute(query, (mantenimiento_id,))
+            m = cursor.fetchone()
+            
+            if not m:
+                messagebox.showerror("Error", "No se encontró el mantenimiento")
+                return
+            
+            # Crear ventana de edición
+            edit_window = ctk.CTkToplevel(self)
+            edit_window.title("Editar Mantenimiento")
+            edit_window.geometry("500x400")
+            edit_window.grab_set()
+            
+            # ID (no editable)
+            ctk.CTkLabel(edit_window, text="ID:").pack(pady=(10, 0))
+            id_entry = ctk.CTkEntry(edit_window, state="readonly")
+            id_entry.pack(fill="x", padx=20)
+            id_entry.configure(state="normal")
+            id_entry.insert(0, m["id_mantenimiento"])
+            id_entry.configure(state="readonly")
+            
+            # Usuario (no editable)
+            ctk.CTkLabel(edit_window, text="Usuario:").pack(pady=(10, 0))
+            usuario_entry = ctk.CTkEntry(edit_window, state="readonly")
+            usuario_entry.pack(fill="x", padx=20)
+            usuario_entry.insert(0, f"{m['id_usuario']} - {m['nombre']}")
+            
+            # Fecha
+            ctk.CTkLabel(edit_window, text="Fecha:").pack(pady=(10, 0))
+            fecha_entry = ctk.CTkEntry(edit_window)
+            fecha_entry.pack(fill="x", padx=20)
+            fecha_entry.insert(0, m["fecha_mantenimiento"])
+            
+            # Descripción
+            ctk.CTkLabel(edit_window, text="Descripción:").pack(pady=(10, 0))
+            descripcion_text = ctk.CTkTextbox(edit_window, height=100)
+            descripcion_text.pack(fill="x", padx=20, pady=(0, 10))
+            descripcion_text.insert("1.0", m["descripcion"])
+            
+            # Estado
+            ctk.CTkLabel(edit_window, text="Estado:").pack(pady=(10, 0))
+            estado_combobox = ctk.CTkComboBox(
+                edit_window,
+                values=["Pendiente", "En progreso", "Completado", "Cancelado"]
+            )
+            estado_combobox.pack(fill="x", padx=20, pady=(0, 10))
+            estado_combobox.set(m["estado_tarea"])
+            
+            # Botón de guardar
+            def update_mantenimiento():
+                try:
+                    cursor = self.connection.cursor()
+                    query = """
+                    UPDATE mantenimiento 
+                    SET fecha_mantenimiento = %s, 
+                        descripcion = %s, 
+                        estado_tarea = %s
+                    WHERE id_mantenimiento = %s
+                    """
+                    cursor.execute(query, (
+                        fecha_entry.get(),
+                        descripcion_text.get("1.0", "end-1c"),
+                        estado_combobox.get(),
+                        m["id_mantenimiento"]
+                    ))
+                    self.connection.commit()
+                    
+                    messagebox.showinfo("Éxito", "Mantenimiento actualizado correctamente")
+                    edit_window.destroy()
+                    self.load_mantenimientos()
+                    
+                except Error as e:
+                    messagebox.showerror("Error", f"Error al actualizar mantenimiento: {e}")
+            
+            save_button = ctk.CTkButton(
+                edit_window,
+                text="Guardar Cambios",
+                command=update_mantenimiento,
+                fg_color="#2A8C55",
+                hover_color="#207244"
+            )
+            save_button.pack(pady=10)
+            
+        except Error as e:
+            messagebox.showerror("Error", f"Error al obtener datos del mantenimiento: {e}")
     
     def __del__(self):
+        # Limpiar bindings
+        if hasattr(self, 'tree'):
+            self.tree.unbind("<Button-1>")
+        
+        # Cerrar conexión a la base de datos
         if hasattr(self, 'connection') and self.connection:
             self.connection.close()
 
-# Función para crear y retornar el frame de mantenimiento
 def crear_modulo_mantenimiento(master):
     return MantenimientoFrame(master)
 
-# Ejemplo de uso en tu aplicación principal
 if __name__ == "__main__":
     root = ctk.CTk()
     root.geometry("1000x700")
-    
-    # Crear el frame de mantenimiento
     mantenimiento_frame = MantenimientoFrame(root)
     mantenimiento_frame.pack(fill="both", expand=True, padx=20, pady=20)
-    
     root.mainloop()
