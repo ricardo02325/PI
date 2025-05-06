@@ -8,7 +8,6 @@ from configtimeact import crear_configuracion_sistema
 from mantenimiento import MantenimientoFrame
 from notificaciones import verificar_notificaciones
 
-
 class App(customtkinter.CTk):
 
     def __init__(self):

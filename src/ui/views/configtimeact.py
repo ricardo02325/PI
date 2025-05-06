@@ -231,11 +231,14 @@ class ConfiguracionSistema(ctk.CTkFrame):
                     
                     frame_recuadro = ctk.CTkFrame(
                         self.recuadros_frame,
+                        width=200,
                         border_width=2,
-                        border_color="red",
-                        corner_radius=20,
-                        fg_color="white"
+                        border_color="#3A7EBF",
+                        corner_radius=16,
+                        fg_color=("#EAF2FB", "#1C1F26")
                     )
+
+
                     frame_recuadro.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
                     self.recuadros_frame.grid_columnconfigure(i, weight=1)
                     
@@ -244,17 +247,17 @@ class ConfiguracionSistema(ctk.CTkFrame):
                         frame_recuadro,
                         text=bomba['tipo_actuador'],
                         text_color="black",
-                        font=("Arial", 12, "bold")
+                        font=("Arial", 8, "bold")
                     ).pack(pady=(8, 0))
-                    
-                    # Valor del tiempo
+
                     valor_label = ctk.CTkLabel(
                         frame_recuadro,
                         text=f"{bomba['tencendido']} seg" if bomba['tencendido'] is not None else "N/A",
                         text_color="black",
-                        font=("Arial", 14)
+                        font=("Arial", 12)  # Antes era 14
                     )
                     valor_label.pack(pady=(0, 8))
+
                     
                     self.recuadros_ultimos_datos[bomba['id_actuador']] = valor_label
 
@@ -286,7 +289,7 @@ class ConfiguracionSistema(ctk.CTkFrame):
             border_width=0, 
             corner_radius=10,
             fg_color=("gray95", "gray10"),
-            height=80
+            height=200000
         )
         frame_bomba.pack(pady=6, padx=5, fill="x")
 

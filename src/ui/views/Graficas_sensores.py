@@ -21,19 +21,13 @@ def obtener_datos():
         )
         
         query = """
-        SELECT 
-            s.tipo_sensor, 
-            l.valor, 
-            DATE_FORMAT(l.fecha_hora, '%d-%m-%Y') AS fecha
-        FROM 
-            lecturas_sensores l
-        JOIN 
-            sensores s ON l.id_sensor = s.id_sensor
-        WHERE 
-            LOWER(s.tipo_sensor) IN ('ph', 'conductividad_elec', 'temperatura')
-        ORDER BY 
-            l.fecha_hora;
+            SELECT s.tipo_sensor, l.valor, l.fecha_hora
+            FROM lecturas_sensores l
+            JOIN sensores s ON l.id_sensor = s.id_sensor
+            WHERE LOWER(s.tipo_sensor) IN ('ph', 'conductividad_elec', 'temperatura')
+            ORDER BY l.fecha_hora
         """
+        
         cursor = db.cursor(dictionary=True)
         cursor.execute(query)
         datos = cursor.fetchall()
