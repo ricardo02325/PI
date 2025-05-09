@@ -194,8 +194,8 @@ class MantenimientoFrame(ctk.CTkFrame):
             self.tree.heading(col, text=text)
             self.tree.column(col, width=width, anchor=anchor)
         
-        # Configurar estilo para acciones
-        self.tree.tag_configure('action', foreground='blue', font=('Helvetica', 10, 'underline'))
+        # Configurar estilo para acciones (texto normal)
+        self.tree.tag_configure('action', font=('Helvetica', 10))
         
         # Configurar evento de click
         self.tree.bind("<Button-1>", self.on_tree_click)
@@ -214,11 +214,17 @@ class MantenimientoFrame(ctk.CTkFrame):
         column = self.tree.identify("column", event.x, event.y)
         item = self.tree.identify("item", event.x, event.y)
         
+        # Deseleccionar todo primero
+        for selected_item in self.tree.selection():
+            self.tree.selection_remove(selected_item)
+        
         # Si se clickeó en la columna de acciones
         if region == "cell" and column == "#6":
             values = self.tree.item(item)["values"]
             if values:  # Asegurarse que hay valores
                 self.edit_mantenimiento(values[0])
+        elif item:  # Si se clickeó en otra parte de la fila
+            self.tree.selection_add(item)
     
     def load_usuarios(self):
         if not self.connection:
@@ -261,14 +267,17 @@ class MantenimientoFrame(ctk.CTkFrame):
             
             # Insertar datos
             for m in mantenimientos:
-                self.tree.insert("", "end", 
+                item_id = self.tree.insert("", "end", 
                                values=(m["id_mantenimiento"],
                                       f"{m['id_usuario']} - {m['nombre']}",
                                       m["fecha_mantenimiento"],
                                       m["descripcion"],
                                       m["estado_tarea"],
-                                      "Editar"),
-                               tags=('action',))
+                                      "Editar"))
+                
+                # Aplicar tag solo a la columna de acciones
+                self.tree.item(item_id, tags=('action',))
+                self.tree.set(item_id, "acciones", "Editar")
             
         except Error as e:
             messagebox.showerror("Error", f"Error al cargar mantenimientos: {e}")

@@ -261,7 +261,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
                     
                     self.recuadros_ultimos_datos[bomba['id_actuador']] = valor_label
 
-    
                 save_button = ctk.CTkButton(
                     self.opciones_frame, 
                     text="Guardar Configuración", 
