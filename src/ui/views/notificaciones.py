@@ -15,7 +15,7 @@ else:
 
 json_file = os.path.join(base_path, "notificados.json")
 audio_file = os.path.join(base_path, "sonido_alertas.wav")
-icon_file = os.path.join(base_path, "alert.png")  # Asegúrate de tenerlo
+icon_file = os.path.join(base_path, "alertx.png")  # Asegúrate de tenerlo
 
 def reproducir_sonido():
     try:
