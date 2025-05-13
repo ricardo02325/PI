@@ -1,32 +1,68 @@
 import json
 import os
 import time
-from notifypy import Notify
+import subprocess
+import platform
 
-# Ruta al archivo JSON
-base_path = os.path.dirname(__file__)
+# Detectar sistema operativo
+SO = platform.system()
+
+# Establecer rutas según plataforma
+if SO == "Windows":
+    base_path = r"C:\Users\Colibecas\Desktop\PI\src\ui\assets"
+else:
+    base_path = "/home/pi/proyecto/assets"
+
 json_file = os.path.join(base_path, "notificados.json")
+audio_file = os.path.join(base_path, "sonido_alertas.wav")
+icon_file = os.path.join(base_path, "alert.png")  # Asegúrate de tenerlo
 
-# Guardar última hora de modificación conocida
-ultima_modificacion = None
+def reproducir_sonido():
+    try:
+        if SO == "Windows":
+            subprocess.run(["powershell", "-c", f'(New-Object Media.SoundPlayer "{audio_file}").PlaySync();'])
+        else:
+            subprocess.run(["aplay", audio_file])
+    except Exception as e:
+        print(f"⚠️ Error al reproducir sonido: {e}")
+
+def mostrar_notificacion(titulo, mensaje):
+    try:
+        if SO == "Windows":
+            from notifypy import Notify
+            notification = Notify()
+            notification.title = titulo
+            notification.message = mensaje
+            notification.icon = icon_file  # Ícono personalizado
+            notification.audio = audio_file
+            notification.send()
+        else:
+            # notify-send en Linux (Raspberry Pi)
+            subprocess.run([
+                "notify-send", titulo, mensaje,
+                "--icon", icon_file,
+                "--urgency=normal"
+            ])
+    except Exception as e:
+        print(f"⚠️ Error al mostrar notificación: {e}")
 
 def verificar_notificaciones():
+    if not os.path.exists(json_file):
+        print(f"❌ El archivo JSON no existe en: {json_file}")
+        return
+
     with open(json_file, "r") as file:
         notificados = json.load(file)
-
-    notification = Notify()
-    notification.title = "Alerta"
-    notification.audio = os.path.join(base_path, "sonido_alertas.wav")
-    # Línea eliminada: icono personalizado
 
     alguna_noti = False
 
     for grupo_id, alertas in notificados.items():
         for alerta_id, registro in alertas.items():
             if not registro.get("notify", False):
-                print(f"🔔 Enviando notificación del grupo {grupo_id} para ID {registro['id']}")
-                notification.message = f"{registro['message']} - {registro['date']}"
-                notification.send()
+                mensaje = f"{registro['message']} - {registro['date']}"
+                print(f"🔔 ALERTA del grupo {grupo_id}: {mensaje}")
+                mostrar_notificacion("Alerta del sistema", mensaje)
+                reproducir_sonido()
                 registro["notify"] = True
                 alguna_noti = True
 
