@@ -3,6 +3,9 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import date
 from tkinter import ttk, messagebox
+from tkinter.font import Font
+from PIL import Image, ImageTk
+import os
 
 class MantenimientoFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -10,6 +13,9 @@ class MantenimientoFrame(ctk.CTkFrame):
         
         # Configuración inicial
         self.configure(fg_color="white")
+        
+        # Cargar imágenes
+        self.load_images()
         
         # Conectar a la base de datos
         self.connection = self.connect_to_database()
@@ -20,6 +26,19 @@ class MantenimientoFrame(ctk.CTkFrame):
         # Cargar datos iniciales
         self.load_mantenimientos()
         self.load_usuarios()
+    
+    def load_images(self):
+        # Ruta base para las imágenes
+        base_path = os.path.dirname(os.path.realpath(__file__))
+        image_path = os.path.join(base_path, "test_images")
+        
+        # Cargar imagen de edición
+        try:
+            edit_img = Image.open(os.path.join(image_path, "edit.png"))
+            self.edit_icon = ctk.CTkImage(edit_img.resize((20, 20), Image.LANCZOS))
+        except:
+            # Fallback si no se encuentra la imagen
+            self.edit_icon = None
     
     def connect_to_database(self):
         try:
@@ -158,15 +177,16 @@ class MantenimientoFrame(ctk.CTkFrame):
         
         # Configurar estilo
         style.configure("Treeview", 
-                       background="#FFFFFF",
-                       foreground="black",
-                       rowheight=25,
-                       fieldbackground="#FFFFFF",
-                       bordercolor="#E0E0E0",
-                       borderwidth=1)
+                      background="#FFFFFF",
+                      foreground="black",
+                      rowheight=30,
+                      fieldbackground="#FFFFFF",
+                      bordercolor="#E0E0E0",
+                      borderwidth=1)
+        
         style.map('Treeview', 
-                 background=[('selected', '#2A8C55')],
-                 foreground=[('selected', 'white')])
+                 background=[('selected', '#E0E0E0')],
+                 foreground=[('selected', 'black')])
         
         style.configure("Treeview.Heading", 
                       background="#2A8C55",
@@ -193,9 +213,6 @@ class MantenimientoFrame(ctk.CTkFrame):
         for col, text, width, anchor in columns_config:
             self.tree.heading(col, text=text)
             self.tree.column(col, width=width, anchor=anchor)
-        
-        # Configurar estilo para acciones (texto normal)
-        self.tree.tag_configure('action', font=('Helvetica', 10))
         
         # Configurar evento de click
         self.tree.bind("<Button-1>", self.on_tree_click)
@@ -265,19 +282,38 @@ class MantenimientoFrame(ctk.CTkFrame):
             for item in self.tree.get_children():
                 self.tree.delete(item)
             
-            # Insertar datos
+            # Insertar datos con botón de edición
             for m in mantenimientos:
+                # Usamos el texto "Editar" o el icono si está disponible
+                accion_text = "Editar" if self.edit_icon is None else ""
+                
                 item_id = self.tree.insert("", "end", 
                                values=(m["id_mantenimiento"],
                                       f"{m['id_usuario']} - {m['nombre']}",
                                       m["fecha_mantenimiento"],
                                       m["descripcion"],
                                       m["estado_tarea"],
-                                      "Editar"))
+                                      accion_text))
                 
-                # Aplicar tag solo a la columna de acciones
-                self.tree.item(item_id, tags=('action',))
-                self.tree.set(item_id, "acciones", "Editar")
+                # Si tenemos icono, lo añadimos como una etiqueta
+                if self.edit_icon:
+                    btn_frame = ctk.CTkFrame(self.tree, width=80, height=30, fg_color="transparent")
+                    btn_frame.pack_propagate(False)
+                    
+                    edit_btn = ctk.CTkButton(
+                        btn_frame,
+                        text="",
+                        image=self.edit_icon,
+                        width=30,
+                        height=30,
+                        fg_color="transparent",
+                        hover_color="#E0E0E0",
+                        command=lambda id=m["id_mantenimiento"]: self.edit_mantenimiento(id)
+                    )
+                    edit_btn.pack(pady=5)
+                    
+                    # Posicionamos el frame en la columna de acciones
+                    self.tree.window_create(item_id, column="acciones", window=btn_frame, align="center")
             
         except Error as e:
             messagebox.showerror("Error", f"Error al cargar mantenimientos: {e}")
