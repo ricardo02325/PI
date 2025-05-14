@@ -1,0 +1,44 @@
+import serial
+import json
+import mysql.connector
+import time
+from datetime import datetime
+
+# Conexión a la base de datos
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="123",
+    database="sistema_hidroponico"
+)
+cursor = conn.cursor()
+
+# Conexión al Arduino
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+print("Esperando datos del Arduino...")
+
+while True:
+    try:
+        linea = ser.readline().decode('utf-8').strip()
+        if not linea:
+            continue
+
+        # Parseo del JSON
+        datos = json.loads(linea)
+        distancia = datos.get("distancia_cm")
+
+        if distancia is not None:
+            # Guardar en la tabla lecturas_sensores
+            query = "INSERT INTO lecturas_sensores (id_sensor, valor, fecha_hora) VALUES (%s, %s, %s)"
+            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute(query, (2, distancia, now))
+            conn.commit()
+
+            print(f"[{now}] Insertado: Sensor ID 2 - {distancia} cm")
+            time.sleep(60)  # Espera 1 minuto
+
+    except json.JSONDecodeError:
+        print("JSON inválido:", linea)
+    except Exception as e:
+        print("Error:", e)
+        time.sleep(5)
