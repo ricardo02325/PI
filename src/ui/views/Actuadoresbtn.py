@@ -13,12 +13,12 @@ def crear_interfaz_actuadores(root):
     bombas_labels = []
     bomba_animaciones = [None] * 4
 
-    # Cargar imágenes
-    bomba_on_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Desktop\PI\src\ui\views\test_images\bomba_on.png"),
-                                dark_image=Image.open(r"C:\Users\Colibecas\Desktop\PI\src\ui\views\test_images\bomba_on.png"),
+    # Cargar imágenes C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png
+    bomba_on_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
+                                dark_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
                                 size=(100, 100))  # Ajusta el tamaño de la imagen según sea necesario
-    bomba_off_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Desktop\PI\src\ui\views\test_images\bomba_off.png"),
-                                 dark_image=Image.open(r"C:\Users\Colibecas\Desktop\PI\src\ui\views\test_images\bomba_off.png"),
+    bomba_off_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
+                                 dark_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
                                  size=(100, 100))  # Cambia esta ruta si la imagen para el estado apagado es diferente
 
     def obtener_estados():

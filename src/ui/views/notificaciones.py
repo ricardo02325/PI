@@ -9,7 +9,7 @@ SO = platform.system()
 
 # Establecer rutas según plataforma
 if SO == "Windows":
-    base_path = r"C:\Users\Colibecas\Desktop\PI\src\ui\assets"
+    base_path = r"C:\Users\Colibecas\Escritorio\PI\src\ui\assets"
 else:
     base_path = "/home/pi/proyecto/assets"
 
