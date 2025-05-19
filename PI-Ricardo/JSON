@@ -1,0 +1,21 @@
+import serial
+import json
+
+# Ajusta el puerto a tu sistema. Ej: /dev/ttyUSB0 o /dev/ttyACM0
+puerto = '/dev/ttyACM0'
+baudrate = 9600
+
+ser = serial.Serial(puerto, baudrate, timeout=1)
+
+print("Esperando datos del Arduino...")
+
+while True:
+    try:
+        linea = ser.readline().decode('utf-8').strip()
+        if linea:
+            datos = json.loads(linea)
+            print("Distancia:", datos["distancia_cm"], datos["unidad"])
+    except json.JSONDecodeError:
+        print("JSON inválido:", linea)
+    except Exception as e:
+        print("Error:", e)
