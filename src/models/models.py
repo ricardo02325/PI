@@ -46,15 +46,15 @@ def actualizar_alerta(id_alerta, nuevo_estado):
             cursor.close()
             conexion.close()
 
-def obtener_alertas():
-    """Obtiene todas las alertas inactivas con tipo 'Valor fuera de rango'."""
+def obtener_alertas_completas():
     conexion = conectar_db()
     if conexion:
         try:
             cursor = conexion.cursor(dictionary=True)  # Retorna resultados como diccionarios
             consulta_sql = """
                 SELECT * FROM alertas 
-                WHERE estado = 'por atender'
+                WHERE estado = 'En revision'
+                ORDER BY fecha_hora DESC
             """
             cursor.execute(consulta_sql)
             alertas = cursor.fetchall()  # Obtiene todas las filas de la consulta
@@ -66,7 +66,7 @@ def obtener_alertas():
             cursor.close()
             conexion.close()
 
-def obtener_alertas_completas():
+def obtener_alertas():
     """Obtiene todas las alertas (activas, resueltas y descartadas) ordenadas por fecha descendente."""
     conexion = conectar_db()
     if not conexion:
@@ -150,7 +150,7 @@ def actualizar_alerta(id_alerta, nuevo_estado):
             """
             cursor.execute(query, (nuevo_estado, id_alerta))
             conexion.commit()
-            print(f"Alerta {id_alerta} actualizada a estado {nuevo_estado}.")
+            print(f"Alerta {id_alerta} actualizada a estado '{nuevo_estado}'.")
         except mysql.connector.Error as err:
             print(f"Error al actualizar la alerta: {err}")
         finally:
