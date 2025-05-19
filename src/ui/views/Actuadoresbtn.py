@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from PIL import Image
 import mysql.connector
+from PIL import Image
 
 def crear_interfaz_actuadores(root):
     DB_HOST = "127.0.0.1"
@@ -13,12 +13,12 @@ def crear_interfaz_actuadores(root):
     bombas_labels = []
     bomba_animaciones = [None] * 4
 
-    # Cargar imágenes C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png
-    bomba_on_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
-                                dark_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
+    # Cargar imágenes
+    bomba_on_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
+                                dark_image=Image.open(r"C:\Users\colibecas\Escritorio\PI\src\ui\views\test_images\bomba_on.png"),
                                 size=(100, 100))  # Ajusta el tamaño de la imagen según sea necesario
-    bomba_off_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
-                                 dark_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
+    bomba_off_img = ctk.CTkImage(light_image=Image.open(r"C:\Users\colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
+                                 dark_image=Image.open(r"C:\Users\colibecas\Escritorio\PI\src\ui\views\test_images\bomba_off.png"),
                                  size=(100, 100))  # Cambia esta ruta si la imagen para el estado apagado es diferente
 
     def obtener_estados():
@@ -41,10 +41,10 @@ def crear_interfaz_actuadores(root):
 
     def actualizar_visual(indice):
         estado = estados_locales[indice]
-        color = "#2ECC71" if estado == "Inactivo" else "#E74C3C"
-        boton_text = "Apagar ⛔" if estado == "Inactivo" else "Encender 💡"
-        boton_color = "#E74C3C" if estado == "Inactivo" else "#3498DB"
-        hover_color = "#C0392B" if estado == "Inactivo" else "#2980B9"
+        color = "#E74C3C" if estado == "Inactivo" else "#2ECC71"
+        boton_text = "Encender 💡" if estado == "Inactivo" else "Apagar ⛔"
+        boton_color = "#3498DB" if estado == "Inactivo" else "#E74C3C"
+        hover_color = "#2980B9" if estado == "Inactivo" else "#C0392B"
 
         indicadores[indice].configure(
             fg_color=color,
@@ -65,12 +65,11 @@ def crear_interfaz_actuadores(root):
             if bomba_animaciones[indice] is not None:
                 root.after_cancel(bomba_animaciones[indice])
                 bomba_animaciones[indice] = None
-            bombas_labels[indice].configure(image=bomba_off_img)
-
+            bombas_labels[indice].configure(image=bomba_off_img)  # Usar imagen de apagado
 
     def cambiar_estado(indice):
         estado_actual = estados_locales[indice]
-        nuevo_estado = "Inactivo" if estado_actual == "Activo" else "Activo"
+        nuevo_estado = "Activo" if estado_actual == "Inactivo" else "Inactivo"
         estados_locales[indice] = nuevo_estado
         actualizar_visual(indice)
 
@@ -168,7 +167,7 @@ def crear_interfaz_actuadores(root):
         botones.append(boton)
 
         # Bomba de agua (animación)
-        bomba_label = ctk.CTkLabel(frame, image=bomba_off_img, text="")  # Eliminar texto por defecto
+        bomba_label = ctk.CTkLabel(frame, image=bomba_off_img)  # Usa la imagen por defecto
         bomba_label.pack(pady=(10, 5))
         bombas_labels.append(bomba_label)
 

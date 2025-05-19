@@ -19,7 +19,7 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        icon_size = (32, 32)
+        icon_size = (48, 48)
         image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
 
         self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")).resize(icon_size, Image.LANCZOS))
@@ -55,7 +55,7 @@ class App(customtkinter.CTk):
 
         self.navigation_frame_label = customtkinter.CTkLabel(
             self.navigation_frame, text="  Sistema Hidropónico", image=self.logo_image,
-            compound="left", font=customtkinter.CTkFont(size=15, weight="bold"))
+            compound="left", font=customtkinter.CTkFont(size=18, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
         # Botones del menú
@@ -88,7 +88,7 @@ class App(customtkinter.CTk):
         button = customtkinter.CTkButton(
             self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text=text,
             fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-            image=image, anchor="w", command=command
+            image=image, anchor="w", command=command, font=customtkinter.CTkFont(size=18)
         )
         button.grid(row=row, column=0, sticky="ew")
         return button
