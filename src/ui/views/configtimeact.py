@@ -2,6 +2,10 @@ import sys
 import mysql.connector
 import customtkinter as ctk
 from datetime import datetime
+from src.ui.views import notific
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Añadir el path al proyecto si es necesario
 sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')

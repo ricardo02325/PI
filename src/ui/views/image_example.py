@@ -7,6 +7,14 @@ from Actuadoresbtn import crear_interfaz_actuadores
 from configtimeact import crear_configuracion_sistema
 from mantenimiento import MantenimientoFrame
 from notificaciones import verificar_notificaciones
+import notific
+import sys
+import os
+
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
+from configtimeact import crear_configuracion_sistema
 
 
 class App(customtkinter.CTk):
@@ -24,7 +32,9 @@ class App(customtkinter.CTk):
         icon_size = (32, 32)
         image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
 
-        self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")).resize(icon_size, Image.LANCZOS))
+        self.logo_image = customtkinter.CTkImage(
+            Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")).resize(icon_size, Image.LANCZOS)
+        )
 
         self.home_image = customtkinter.CTkImage(
             light_image=Image.open(os.path.join(image_path, "home.png")).resize(icon_size, Image.LANCZOS),
@@ -59,7 +69,7 @@ class App(customtkinter.CTk):
         # Panel lateral
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
-        self.navigation_frame.grid_rowconfigure(6, weight=1)
+        self.navigation_frame.grid_rowconfigure(7, weight=1)  # subí una fila para el nuevo botón
 
         self.navigation_frame_label = customtkinter.CTkLabel(
             self.navigation_frame, text="  Sistema Hidropónico", image=self.logo_image,
@@ -73,17 +83,31 @@ class App(customtkinter.CTk):
         self.bombas_button = self.create_nav_button("Configuración Bombas", self.settings_image, self.bombas_button_event, 4)
         self.maintenance_button = self.create_nav_button("Mantenimiento", self.maintenance_image, self.mantenimiento_button_event, 5)
 
+        # Botón Notificaciones (nuevo)
+        self.notifications_button = customtkinter.CTkButton(
+            self.navigation_frame,
+            text="🔔 Notificaciones",
+            font=customtkinter.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=("gray10", "gray90"),
+            hover_color=("gray70", "gray30"),
+            command=self.notifications_button_event
+        )
+        self.notifications_button.grid(row=6, column=0, sticky="ew", pady=10)
+
         # Frames
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.alerts_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.actuators_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.bombas_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.maintenance_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.notifications_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")  # Frame para notificaciones
 
         self.graficas_mostradas = False
         self.alertas_mostradas = False
         self.bombas_config_mostrada = False
         self.mantenimiento_mostrado = False
+        self.notificaciones_mostradas = False
 
         self.select_frame_by_name("home")
 
@@ -109,6 +133,7 @@ class App(customtkinter.CTk):
         self.actuators_button.configure(fg_color=("gray75", "gray25") if name == "actuators" else "transparent")
         self.bombas_button.configure(fg_color=("gray75", "gray25") if name == "bombas" else "transparent")
         self.maintenance_button.configure(fg_color=("gray75", "gray25") if name == "mantenimiento" else "transparent")
+        self.notifications_button.configure(fg_color=("gray75", "gray25") if name == "notificaciones" else "transparent")
 
         if name == "home":
             self.show_frame(self.home_frame, iniciar_graficas, self.graficas_mostradas)
@@ -137,6 +162,12 @@ class App(customtkinter.CTk):
             self.show_mantenimiento_frame()
         else:
             self.maintenance_frame.grid_forget()
+
+        if name == "notificaciones":
+            self.show_frame(self.notifications_frame, notific.crear_interfaz_notificaciones, self.notificaciones_mostradas)
+            self.notificaciones_mostradas = True
+        else:
+            self.notifications_frame.grid_forget()
 
     def show_frame(self, frame, func=None, flag=None):
         frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
@@ -167,6 +198,9 @@ class App(customtkinter.CTk):
 
     def mantenimiento_button_event(self):
         self.select_frame_by_name("mantenimiento")
+
+    def notifications_button_event(self):
+        self.select_frame_by_name("notificaciones")
 
 
 if __name__ == "__main__":
