@@ -46,21 +46,27 @@ def actualizar_alerta(id_alerta, nuevo_estado):
             cursor.close()
             conexion.close()
 
-def obtener_alertas_completas():
+def obtener_alertas_completas(where_estado=None):
     conexion = conectar_db()
     if conexion:
         try:
-            cursor = conexion.cursor(dictionary=True)  # Retorna resultados como diccionarios
-            consulta_sql = """
-                SELECT * FROM alertas 
-                WHERE estado = 'En revision'
-                ORDER BY fecha_hora DESC
-            """
-            cursor.execute(consulta_sql)
-            alertas = cursor.fetchall()  # Obtiene todas las filas de la consulta
+            cursor = conexion.cursor(dictionary=True)
+            
+            consulta_sql = "SELECT * FROM alertas"
+            parametros = []
+
+            if where_estado:
+                consulta_sql += " WHERE estado = %s"
+                parametros.append(where_estado)
+
+            consulta_sql += " ORDER BY fecha_hora DESC"
+            cursor.execute(consulta_sql, parametros)
+
+            alertas = cursor.fetchall()
             return alertas
+
         except mysql.connector.Error as err:
-            print(f"Error al obtener alertas inactivas: {err}")
+            print(f"Error al obtener alertas: {err}")
             return []
         finally:
             cursor.close()

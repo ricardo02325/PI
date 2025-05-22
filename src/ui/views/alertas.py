@@ -39,24 +39,15 @@ class AlertasApp:
         self.iniciar_actualizaciones_periodicas()
 
     def inicializar_ui(self):
-        # Limpiar frame si ya tenía contenido
         for widget in self.frame.winfo_children():
             widget.destroy()
 
-        # Configurar estructura principal
         self.configurar_estructura_principal()
-        
-        # Cargar datos iniciales
         self.alertas = obtener_alertas_completas()
-        
-        # Actualizar recuadros con datos iniciales
         self.actualizar_recuadros_alertas()
-        
-        # Crear tabla de historial
         self.crear_tabla_historial()
 
     def configurar_estructura_principal(self):
-        # Frame de título
         self.frame_titulo = ctk.CTkFrame(self.frame, fg_color="#E3F2FD")
         self.frame_titulo.pack(pady=(20, 10), fill="x")
         self.label_titulo = ctk.CTkLabel(
@@ -67,15 +58,12 @@ class AlertasApp:
         )
         self.label_titulo.pack()
 
-        # Frame para los recuadros de alertas (4 columnas)
         self.frame_alertas = ctk.CTkFrame(self.frame, fg_color="transparent")
         self.frame_alertas.pack(pady=10, fill="x", padx=20)
         
-        # Configurar grid para los recuadros (4 columnas)
         for i in range(4):
             self.frame_alertas.grid_columnconfigure(i, weight=1)
 
-        # Modal para mensajes
         self.frame_modal = ctk.CTkFrame(
             self.frame, 
             width=300, 
@@ -91,19 +79,15 @@ class AlertasApp:
         self.label_modal.pack(padx=10, pady=40)
 
     def crear_tabla_historial(self):
-        # Frame principal de la tabla
         self.frame_tabla = ctk.CTkFrame(self.frame, fg_color="transparent")
         self.frame_tabla.pack(pady=(10, 20), padx=20, fill="both", expand=True)
         
-        # Frame para los filtros
         self.frame_filtros = ctk.CTkFrame(self.frame_tabla, fg_color="transparent")
         self.frame_filtros.pack(fill="x", pady=(0, 10))
         
-        # Frame interno para centrar los botones
         self.frame_centro_filtros = ctk.CTkFrame(self.frame_filtros, fg_color="transparent")
         self.frame_centro_filtros.pack(expand=True)
         
-        # Botones de filtrado
         self.btn_todos = ctk.CTkButton(
             self.frame_centro_filtros, 
             text="Todas",
@@ -141,14 +125,12 @@ class AlertasApp:
         )
         self.btn_revision.pack(side="left", padx=5)
         
-        # Frame para los encabezados
         self.frame_encabezados = ctk.CTkFrame(
             self.frame_tabla, 
             fg_color=COLORES['header_bg']
         )
         self.frame_encabezados.pack(fill="x", pady=(0, 5))
         
-        # Crear encabezados
         encabezados = ['🔍 ID', '⚠️ Tipo', '📜 Descripción', '📅 Fecha', '🟢 Estado', '⚙️ Acciones']
         for i, texto in enumerate(encabezados):
             label = ctk.CTkLabel(
@@ -160,21 +142,16 @@ class AlertasApp:
             label.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
             self.frame_encabezados.grid_columnconfigure(i, weight=1)
         
-        # Frame para el scrollable
         self.frame_scroll = ctk.CTkScrollableFrame(
             self.frame_tabla, 
             fg_color="transparent"
         )
         self.frame_scroll.pack(fill="both", expand=True)
         
-        # Configurar pesos de columnas
         for i in range(6):
             self.frame_scroll.grid_columnconfigure(i, weight=1)
 
-        # Variable para el filtro actual
         self.filtro_actual = None
-        
-        # Crear filas iniciales
         self.actualizar_filas()
 
     def actualizar_filtro(self, estado):
@@ -182,21 +159,17 @@ class AlertasApp:
         self.actualizar_filas()
 
     def actualizar_filas(self):
-        # Limpiar filas existentes
         for widget in self.frame_scroll.winfo_children():
             widget.destroy()
         
-        # Filtrar alertas según el filtro actual
         alertas_filtradas = self.alertas if self.filtro_actual is None else [
             a for a in self.alertas if a.get('estado', '').lower() == self.filtro_actual.lower()
         ]
         
-        # Crear nuevas filas
         for i, alerta in enumerate(alertas_filtradas):
             self.crear_fila_alerta(alerta, i)
 
     def crear_fila_alerta(self, alerta, index):
-        # Determinar el color basado en el tipo de sensor
         sensor_id = None
         descripcion = alerta.get('descripcion', '')
         
@@ -213,11 +186,11 @@ class AlertasApp:
         
         frame_fila = ctk.CTkFrame(self.frame_scroll, fg_color=color)
         frame_fila.pack(fill="x", pady=2)
+        frame_fila.alerta_id = alerta.get('id_alerta', '')
         
         for col in range(6):
             frame_fila.grid_columnconfigure(col, weight=1)
         
-        # Mostrar datos de la alerta
         datos = [
             str(alerta.get('id_alerta', '')),
             alerta.get('tipo_alerta', ''),
@@ -235,55 +208,50 @@ class AlertasApp:
             )
             label.grid(row=0, column=col, padx=5, pady=5, sticky="nsew")
         
-        # Frame para botones
-        frame_botones = ctk.CTkFrame(frame_fila, fg_color="transparent")
-        frame_botones.grid(row=0, column=5, padx=5, pady=5, sticky="nsew")
+        # Frame para botones (como atributo accesible)
+        frame_fila.frame_botones = ctk.CTkFrame(frame_fila, fg_color="transparent")
+        frame_fila.frame_botones.grid(row=0, column=5, padx=5, pady=5, sticky="nsew")
         
-        # Determinar si los botones deben estar habilitados
         estado = alerta.get('estado', '').lower()
-        botones_habilitados = estado in ('por atender', 'en revision')
-        
-        # Botones de acción
-        btn_resolver = ctk.CTkButton(
-            frame_botones,
-            text="✔️ Resolver",
-            width=80,
-            height=30,
-            command=lambda id=alerta['id_alerta']: self.resolver_alerta(id),
-            fg_color="#4CAF50",
-            font=('Arial', 10),
-            state="normal" if botones_habilitados else "disabled"
-        )
-        btn_resolver.pack(side="left", padx=2)
-        
-        btn_descartar = ctk.CTkButton(
-            frame_botones,
-            text="❌ Descartar",
-            width=80,
-            height=30,
-            command=lambda id=alerta['id_alerta']: self.descartar_alerta(id),
-            fg_color="gray",
-            font=('Arial', 10),
-            state="normal" if botones_habilitados else "disabled"
-        )
-        btn_descartar.pack(side="left", padx=2)
-        
-        # Mostrar botón editar solo para alertas de rango con sensor identificado
-        if sensor_id is not None:
-            btn_editar = ctk.CTkButton(
-                frame_botones,
-                text="✏️ Editar",
+        if estado in ('por atender', 'en revision'):
+            btn_resolver = ctk.CTkButton(
+                frame_fila.frame_botones,
+                text="✔️ Resolver",
                 width=80,
                 height=30,
-                command=lambda id=sensor_id, tipo=SENSOR_NAMES.get(sensor_id, 'Sensor'): self.editar_alerta_callback(tipo, id),
-                fg_color="#1976D2",
-                font=('Arial', 10),
-                state="normal" if botones_habilitados else "disabled"
+                command=lambda id=alerta['id_alerta']: self.resolver_alerta(id),
+                fg_color="#4CAF50",
+                font=('Arial', 10)
             )
-            btn_editar.pack(side="left", padx=2)
+            btn_resolver.pack(side="left", padx=2)
+            
+            btn_descartar = ctk.CTkButton(
+                frame_fila.frame_botones,
+                text="❌ Descartar",
+                width=80,
+                height=30,
+                command=lambda id=alerta['id_alerta']: self.descartar_alerta(id),
+                fg_color="gray",
+                font=('Arial', 10)
+            )
+            btn_descartar.pack(side="left", padx=2)
+            
+            if sensor_id is not None:
+                btn_editar = ctk.CTkButton(
+                    frame_fila.frame_botones,
+                    text="✏️ Editar",
+                    width=80,
+                    height=30,
+                    command=lambda id=sensor_id, tipo=SENSOR_NAMES.get(sensor_id, 'Sensor'): self.editar_alerta_callback(tipo, id),
+                    fg_color="#1976D2",
+                    font=('Arial', 10)
+                )
+                btn_editar.pack(side="left", padx=2)
+        else:
+            # Si la alerta no requiere botones, eliminamos el frame
+            frame_fila.frame_botones.destroy()
 
     def actualizar_recuadros_alertas(self):
-        # Contar alertas por sensor
         contador_alertas = {
             'pH': 0,
             'Profundidad': 0,
@@ -292,13 +260,11 @@ class AlertasApp:
         }
         
         for alerta in self.alertas:
-            # Obtener el id_sensor directamente de la alerta
             id_sensor = alerta.get('id_sensor')
             
             if id_sensor in SENSOR_NAMES:
                 contador_alertas[SENSOR_NAMES[id_sensor]] += 1
             else:
-                # Si no hay id_sensor, intentar determinar el tipo por la descripción
                 descripcion = alerta.get('descripcion', '')
                 if 'pH' in descripcion:
                     contador_alertas['pH'] += 1
@@ -309,11 +275,9 @@ class AlertasApp:
                 elif 'Conductividad' in descripcion:
                     contador_alertas['Conductividad'] += 1
         
-        # Limpiar recuadros existentes
         for widget in self.frame_alertas.winfo_children():
             widget.destroy()
         
-        # Crear nuevos recuadros (uno para cada sensor)
         recuadros = [
             ('pH', COLORES['pH'], f"⚠️ Alertas de pH\n{contador_alertas['pH']} alertas"),
             ('Profundidad', COLORES['Profundidad'], f"📏 Alertas de Profundidad\n{contador_alertas['Profundidad']} alertas"),
@@ -343,22 +307,42 @@ class AlertasApp:
             label.pack(padx=10, pady=10, expand=True)
 
     def resolver_alerta(self, id_alerta):
+        for alerta in self.alertas:
+            if alerta['id_alerta'] == id_alerta:
+                alerta['estado'] = 'Resuelta'
+                break
+        
+        self.ocultar_botones_fila(id_alerta)
+        
         tipo = next((a['tipo_alerta'] for a in self.alertas if a['id_alerta'] == id_alerta), "Alerta")
         actualizar_alerta(id_alerta, 'Resuelta')
         self.mostrar_modal(tipo, "resuelta")
         self.actualizar_datos()
 
     def descartar_alerta(self, id_alerta):
+        for alerta in self.alertas:
+            if alerta['id_alerta'] == id_alerta:
+                alerta['estado'] = 'Descartada'
+                break
+        
+        self.ocultar_botones_fila(id_alerta)
+        
         tipo = next((a['tipo_alerta'] for a in self.alertas if a['id_alerta'] == id_alerta), "Alerta")
         actualizar_alerta(id_alerta, 'Descartada')
         self.mostrar_modal(tipo, "descartada")
         self.actualizar_datos()
 
+    def ocultar_botones_fila(self, id_alerta):
+        for child in self.frame_scroll.winfo_children():
+            if hasattr(child, 'alerta_id') and child.alerta_id == id_alerta:
+                if hasattr(child, 'frame_botones'):
+                    child.frame_botones.destroy()
+                break
+
     def editar_alerta_callback(self, tipo_alerta, id_sensor=None):
         self.editar_alerta(tipo_alerta, id_sensor)
 
     def editar_alerta(self, tipo_alerta, id_sensor=None):
-        """Muestra un formulario modal para editar los triggers de una alerta."""
         formulario_modal = ctk.CTkFrame(
             self.frame, 
             width=400, 
@@ -445,26 +429,19 @@ class AlertasApp:
         return "white" if ctk.get_appearance_mode() == "dark" else "black"
 
     def actualizar_datos(self):
-        # Obtener datos actualizados
         self.alertas = obtener_alertas_completas()
-        
-        # Actualizar UI
         self.actualizar_recuadros_alertas()
         self.actualizar_filas()
 
     def iniciar_actualizaciones_periodicas(self, intervalo=30):
         def actualizar_periodicamente():
             try:
-                # Actualizar datos en segundo plano
                 self.actualizar_datos()
             finally:
-                # Programar próxima actualización
                 self.frame.after(intervalo*1000, actualizar_periodicamente)
         
-        # Iniciar el ciclo de actualización
         self.frame.after(intervalo*1000, actualizar_periodicamente)
 
-# Función para iniciar la aplicación de alertas
 def iniciar_alertas(frame):
     app = AlertasApp(frame)
     return app
