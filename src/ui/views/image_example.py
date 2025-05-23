@@ -5,7 +5,8 @@ from Graficas_sensores import iniciar_graficas
 from alertas import iniciar_alertas
 from Actuadoresbtn import crear_interfaz_actuadores
 from configtimeact import crear_configuracion_sistema
-from notificaciones import verificar_notificaciones
+from notificaciones import Notificador
+from src.models.models import obtener_alertas_completas
 
 class App(customtkinter.CTk):
 
@@ -77,12 +78,24 @@ class App(customtkinter.CTk):
 
         self.select_frame_by_name("home")
 
+        # Iniciar sistema de notificaciones
+        self.notificador = Notificador(self)
+        self.ids_alertas_vistas = set()
+
         # Iniciar verificación periódica de notificaciones
-        self.after(2000, self.comprobar_notificaciones)
+        self.after(20000, self.comprobar_notificaciones)
 
     def comprobar_notificaciones(self):
-        verificar_notificaciones()
-        self.after(2000, self.comprobar_notificaciones)
+        alertas_actuales = obtener_alertas_completas()
+
+        for alerta in alertas_actuales:
+            id_alerta = alerta.get("id_alerta")
+            if id_alerta not in self.ids_alertas_vistas:
+                mensaje = f"⚠️ {alerta.get('tipo_alerta', 'Alerta')} - {alerta.get('descripcion', '')}"
+                self.notificador.recibir_alerta(mensaje)
+                self.ids_alertas_vistas.add(id_alerta)
+
+        self.after(20000, self.comprobar_notificaciones)
 
     def create_nav_button(self, text, image, command, row):
         button = customtkinter.CTkButton(

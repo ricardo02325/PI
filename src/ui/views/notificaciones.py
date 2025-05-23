@@ -1,91 +1,91 @@
-import json
-import os
-import time
-import subprocess
-import platform
+import customtkinter as ctk
+from datetime import datetime
 
-# Detectar sistema operativo
-SO = platform.system()
+class Notificador:
+    def __init__(self, parent_frame):
+        self.parent = parent_frame
+        self.nuevas_alertas = []
+        self.panel_visible = False
 
-# Establecer rutas según plataforma
-if SO == "Windows":
-    base_path = r"C:\Users\Colibecas\Escritorio\PI\src\ui\assets"
-else:
-    base_path = "/home/pi/proyecto/assets"
+        # Contenedor superior derecho
+        self.frame_superior = ctk.CTkFrame(self.parent, fg_color="transparent")
+        self.frame_superior.place(relx=1.0, rely=0.0, anchor="ne", x=-20, y=20)
 
-json_file = os.path.join(base_path, "notificados.json")
-audio_file = os.path.join(base_path, "sonido_alertas.wav")
-icon_file = os.path.join(base_path, "alertx.png")  # Asegúrate de tenerlo
+        # Botón de campanita con diseño moderno
+        self.btn_campana = ctk.CTkButton(
+            self.frame_superior,
+            text="🔔",
+            width=45,
+            height=45,
+            fg_color="#E0E0E0",
+            hover_color="#D32F2F",
+            corner_radius=100,
+            font=('Arial', 20, 'bold'),
+            text_color="black",
+            border_width=0,
+            command=self.toggle_panel
+        )
+        self.btn_campana.pack()
 
-def reproducir_sonido():
-    try:
-        if SO == "Windows":
-            subprocess.run(["powershell", "-c", f'(New-Object Media.SoundPlayer "{audio_file}").PlaySync();'])
+        # Panel de notificaciones
+        self.panel = ctk.CTkFrame(
+            self.parent,
+            width=350,
+            height=250,
+            corner_radius=15,
+            fg_color="#FFFFFF",
+            border_width=1,
+            border_color="#BDBDBD"
+        )
+
+        self.contenido_panel = ctk.CTkScrollableFrame(self.panel, fg_color="transparent")
+        self.contenido_panel.pack(fill="both", expand=True, padx=10, pady=10)
+
+    def toggle_panel(self):
+        if self.panel_visible:
+            self.panel.place_forget()
+            self.panel_visible = False
         else:
-            subprocess.run(["aplay", audio_file])
-    except Exception as e:
-        print(f"⚠️ Error al reproducir sonido: {e}")
+            self.actualizar_panel()
+            self.panel.place(relx=1.0, rely=0.0, anchor="ne", x=-90, y=80)
+            self.panel_visible = True
+            self.btn_campana.configure(fg_color="#E0E0E0")
+            self.nuevas_alertas.clear()
 
-def mostrar_notificacion(titulo, mensaje):
-    try:
-        if SO == "Windows":
-            from notifypy import Notify
-            notification = Notify()
-            notification.title = titulo
-            notification.message = mensaje
-            notification.icon = icon_file  # Ícono personalizado
-            notification.audio = audio_file
-            notification.send()
+    def recibir_alerta(self, mensaje):
+        ahora = datetime.now().strftime("%H:%M:%S")
+        self.nuevas_alertas.append((mensaje, ahora))
+        self.btn_campana.configure(fg_color="#D32F2F")  # rojo fuerte
+        self.actualizar_panel()
+
+    def actualizar_panel(self):
+        for widget in self.contenido_panel.winfo_children():
+            widget.destroy()
+
+        if not self.nuevas_alertas:
+            mensaje = ctk.CTkLabel(
+                self.contenido_panel,
+                text="Sin nuevas notificaciones",
+                font=("Arial", 13, "italic"),
+                text_color="#757575"
+            )
+            mensaje.pack(pady=5)
         else:
-            # notify-send en Linux (Raspberry Pi)
-            subprocess.run([
-                "notify-send", titulo, mensaje,
-                "--icon", icon_file,
-                "--urgency=normal"
-            ])
-    except Exception as e:
-        print(f"⚠️ Error al mostrar notificación: {e}")
+            for msg, hora in reversed(self.nuevas_alertas):
+                item = ctk.CTkFrame(self.contenido_panel, fg_color="#F5F5F5", corner_radius=10)
+                item.pack(fill="x", pady=5, padx=2)
 
-def verificar_notificaciones():
-    if not os.path.exists(json_file):
-        print(f"❌ El archivo JSON no existe en: {json_file}")
-        return
+                texto = ctk.CTkLabel(
+                    item,
+                    text=f"[{hora}] {msg}",
+                    font=("Arial", 13),
+                    text_color="#212121",
+                    anchor="w",
+                    justify="left",
+                    wraplength=300
+                )
+                texto.pack(fill="both", padx=10, pady=6)
 
-    with open(json_file, "r") as file:
-        notificados = json.load(file)
-
-    alguna_noti = False
-
-    for grupo_id, alertas in notificados.items():
-        for alerta_id, registro in alertas.items():
-            if not registro.get("notify", False):
-                mensaje = f"{registro['message']} - {registro['date']}"
-                print(f"🔔 ALERTA del grupo {grupo_id}: {mensaje}")
-                mostrar_notificacion("Alerta del sistema", mensaje)
-                reproducir_sonido()
-                registro["notify"] = True
-                alguna_noti = True
-
-    if alguna_noti:
-        with open(json_file, "w") as file:
-            json.dump(notificados, file, indent=4)
-
-# Bucle de monitoreo
-if __name__ == "__main__":
-    if not os.path.exists(json_file):
-        print("❌ El archivo JSON no existe.")
-        exit()
-
-    ultima_modificacion = os.path.getmtime(json_file)
-    print("⏳ Monitoreando cambios en notificados.json...")
-
-    try:
-        while True:
-            time.sleep(1)
-            nueva_modificacion = os.path.getmtime(json_file)
-            if nueva_modificacion != ultima_modificacion:
-                print("🔄 Cambio detectado en notificados.json.")
-                ultima_modificacion = nueva_modificacion
-                verificar_notificaciones()
-    except KeyboardInterrupt:
-        print("\n🛑 Monitoreo detenido por el usuario.")
+# Ejemplo de uso (en tu app principal):
+# notificador = Notificador(self)
+# notificador.recibir_alerta("Nueva alerta de pH detectada")
