@@ -22,6 +22,7 @@ class App(customtkinter.CTk):
         icon_size = (32, 32)
         image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
 
+
         self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")).resize(icon_size, Image.LANCZOS))
 
         self.home_image = customtkinter.CTkImage(
