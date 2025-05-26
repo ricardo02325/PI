@@ -14,6 +14,10 @@ from matplotlib import font_manager
 from datetime import datetime, timedelta
 import webbrowser
 from tkinter import filedialog
+import cv2
+from PIL import Image, ImageTk
+import tkinter as tk
+from tkinter import ttk
 
 # Configuración inicial
 ctk.set_appearance_mode("light")
@@ -584,6 +588,175 @@ def iniciar_graficas(frame):
         text_color="#2c3e50"
     )
     bienvenido_label.pack(side="left", padx=(20, 0))
+    
+     # --- BOTONES DE AYUDA Y NOTIFICACIONES ---
+    botones_frame = ctk.CTkFrame(encabezado_frame, fg_color="transparent")
+    botones_frame.pack(side="right", padx=10)
+    
+    # Función para mostrar el video de ayuda en un modal
+    def mostrar_ayuda():
+        # Construir la ruta absoluta al video
+        video_path = os.path.join("C:\\", "Users", "Colibecas", "Escritorio", "PI", "src", "ui", "views", "test_images", "Graficas.mp4")
+        
+        # Verificar si el archivo existe
+        if not os.path.exists(video_path):
+            tk.messagebox.showerror("Error", f"El archivo de ayuda no se encontró en:\n{video_path}")
+            return
+        
+        # Crear ventana modal
+        modal = ctk.CTkToplevel(frame)
+        modal.title("Ayuda - Tutorial de Gráficas")
+        modal.geometry("800x600")
+        modal.resizable(True, True)
+        modal.grab_set()  # Hace que sea modal
+        
+        # Centrar el modal en la pantalla
+        window_width = 800
+        window_height = 600
+        screen_width = modal.winfo_screenwidth()
+        screen_height = modal.winfo_screenheight()
+        center_x = int(screen_width/2 - window_width/2)
+        center_y = int(screen_height/2 - window_height/2)
+        modal.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+        
+        # Frame principal del modal
+        main_frame = ctk.CTkFrame(modal, fg_color="white")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Etiqueta para el video
+        video_label = ctk.CTkLabel(main_frame, text="")
+        video_label.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Botones de control
+        controls_frame = ctk.CTkFrame(main_frame, fg_color="white")
+        controls_frame.pack(fill="x", padx=10, pady=(0, 10))
+        
+        btn_play = ctk.CTkButton(
+            controls_frame,
+            text="▶ Reproducir",
+            command=lambda: play_video(),
+            width=100
+        )
+        btn_play.pack(side="left", padx=5)
+        
+        btn_pause = ctk.CTkButton(
+            controls_frame,
+            text="⏸ Pausar",
+            command=lambda: pause_video(),
+            width=100
+        )
+        btn_pause.pack(side="left", padx=5)
+        
+        btn_stop = ctk.CTkButton(
+            controls_frame,
+            text="⏹ Detener",
+            command=lambda: stop_video(),
+            width=100
+        )
+        btn_stop.pack(side="left", padx=5)
+        
+        # Variables de control del video
+        cap = None
+        video_running = False
+        current_frame = 0
+        
+        def play_video():
+            nonlocal cap, video_running, current_frame
+            
+            if cap is None:
+                cap = cv2.VideoCapture(video_path)
+                current_frame = 0
+            
+            video_running = True
+            update_video()
+        
+        def pause_video():
+            nonlocal video_running
+            video_running = False
+        
+        def stop_video():
+            nonlocal cap, video_running, current_frame
+            video_running = False
+            current_frame = 0
+            if cap is not None:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                ret, frame = cap.read()
+                if ret:
+                    show_frame(frame)
+        
+        def update_video():
+            nonlocal current_frame
+            
+            if video_running and cap is not None:
+                ret, frame = cap.read()
+                current_frame += 1
+                
+                if ret:
+                    show_frame(frame)
+                    modal.after(30, update_video)
+                else:
+                    # Si llegamos al final, reiniciamos
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    current_frame = 0
+                    modal.after(30, update_video)
+        
+        def show_frame(frame):
+            # Convertir el frame de OpenCV a formato compatible con tkinter
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame)
+            
+            # Redimensionar manteniendo el aspect ratio
+            max_width = video_label.winfo_width() - 20
+            max_height = video_label.winfo_height() - 20
+            
+            if max_width <= 0 or max_height <= 0:
+                return
+                
+            ratio = min(max_width/img.width, max_height/img.height)
+            new_size = (int(img.width*ratio), int(img.height*ratio))
+            img = img.resize(new_size, Image.LANCZOS)
+            
+            imgtk = ImageTk.PhotoImage(image=img)
+            video_label.configure(image=imgtk)
+            video_label.image = imgtk  # Mantener referencia
+        
+        # Configurar el cierre del modal
+        def on_closing():
+            nonlocal cap
+            if cap is not None:
+                cap.release()
+            modal.destroy()
+        
+        modal.protocol("WM_DELETE_WINDOW", on_closing)
+        
+        # Mostrar el primer frame
+        stop_video()
+    
+    # Botón de ayuda (signo de interrogación)
+    btn_ayuda = ctk.CTkButton(
+        botones_frame,
+        text="?",
+        width=30,
+        height=30,
+        font=("Montserrat", 14, "bold"),
+        fg_color="#3498db",
+        hover_color="#2980b9",
+        command=mostrar_ayuda
+    )
+    btn_ayuda.pack(side="left", padx=5)
+    
+    # Botón de notificaciones (puedes mantener el que ya tenías o añadir este)
+    btn_notificaciones = ctk.CTkButton(
+        botones_frame,
+        text="🔔",
+        width=30,
+        height=30,
+        font=("Montserrat", 14),
+        fg_color="transparent",
+        hover_color="#f0f0f0",
+        command=lambda: print("Mostrar notificaciones")  # Aquí puedes añadir tu función de notificaciones
+    )
+    btn_notificaciones.pack(side="left", padx=5)
     
     # --- CONTENEDOR PRINCIPAL ---
     main_container = ctk.CTkFrame(frame, fg_color="transparent")

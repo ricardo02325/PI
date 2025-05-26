@@ -2,9 +2,17 @@ import sys
 import mysql.connector
 import customtkinter as ctk
 from datetime import datetime
+import cv2
+import os
+import tkinter as tk
+from PIL import Image, ImageTk
 
-# Añadir el path al proyecto si es necesario
-sys.path.append('C:\\Users\\Colibecas\\Desktop\\PI')
+# Variables globales para el reproductor de video
+cap = None
+video_running = False
+current_frame = 0
+video_modal = None
+video_label = None
 
 class Modal(ctk.CTkToplevel):
     def __init__(self, parent, title, message, width=400, height=200):
@@ -66,20 +74,55 @@ class ConfiguracionSistema(ctk.CTkFrame):
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Título principal centrado con emoji de engranaje
+        # Header frame con título y botones
+        self.header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.header_frame.pack(fill="x", pady=(0, 20))
+        self.header_frame.grid_columnconfigure(0, weight=1)
+
+        # Título principal
         self.titulo_principal = ctk.CTkLabel(
-            self.main_frame,
+            self.header_frame,
             text="⚙ CONFIGURACION GENERAL",
             font=("Arial", 24, "bold"),
             anchor="center"
         )
-        self.titulo_principal.pack(fill="x", pady=(0, 20))
+        self.titulo_principal.grid(row=0, column=0, padx=10, sticky="nsew")
+
+        # Frame para botones de ayuda y notificaciones
+        self.buttons_frame = ctk.CTkFrame(self.header_frame, fg_color="transparent")
+        self.buttons_frame.grid(row=0, column=1, sticky="e")
+
+        # Botón de ayuda para video
+        self.btn_ayuda = ctk.CTkButton(
+            self.buttons_frame,
+            text="?",
+            width=30,
+            height=30,
+            font=("Arial", 14, "bold"),
+            fg_color="#3498db",
+            hover_color="#2980b9",
+            command=self.mostrar_ayuda_config
+        )
+        self.btn_ayuda.pack(side="left", padx=5)
+
+        # Botón de notificaciones
+        self.btn_notificaciones = ctk.CTkButton(
+            self.buttons_frame,
+            text="🔔",
+            width=30,
+            height=30,
+            font=("Arial", 14),
+            fg_color="transparent",
+            hover_color="#f0f0f0",
+            command=lambda: print("Mostrar notificaciones")
+        )
+        self.btn_notificaciones.pack(side="left", padx=5)
 
         # Contenedor para menú y contenido
         self.content_container = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.content_container.pack(fill="both", expand=True)
 
-        # Menú lateral izquierdo mejorado
+        # Menú lateral izquierdo
         self.menu_frame = ctk.CTkFrame(
             self.content_container, 
             width=280, 
@@ -97,7 +140,7 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         self.menu_label.pack(fill="x", padx=15)
 
-        # Frame de opciones con mejor diseño
+        # Frame de opciones
         self.opciones_frame = ctk.CTkFrame(
             self.menu_frame, 
             fg_color="transparent",
@@ -105,9 +148,9 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         self.opciones_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
-        # Inicializar opciones vacías (se llenarán con datos de la BD)
+        # Inicializar opciones vacías
         self.opciones = {}
-        self.bombas_data = {}  # Para almacenar datos de las bombas
+        self.bombas_data = {}
 
         # Sección de últimos datos ingresados
         self.ultimos_datos_frame = ctk.CTkFrame(
@@ -131,7 +174,7 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         self.recuadros_frame.pack(fill="x")
 
-        # Recuadros de últimos datos (inicialmente vacíos)
+        # Recuadros de últimos datos
         self.recuadros_ultimos_datos = {}
 
         # Contenedor derecho con scroll
@@ -161,6 +204,139 @@ class ConfiguracionSistema(ctk.CTkFrame):
         self.cargar_actuadores()
         # Cargar configuración de tiempos
         self.cargar_configuracion_tiempos()
+
+    def mostrar_ayuda_config(self):
+        """Muestra el video de ayuda para el módulo de configuración"""
+        global cap, video_running, current_frame, video_modal, video_label
+        
+        video_path = os.path.join("C:\\", "Users", "Colibecas", "Escritorio", "PI", "src", "ui", "views", "test_images", "Configtimes.mp4")
+        
+        if not os.path.exists(video_path):
+            tk.messagebox.showerror("Error", f"El archivo de ayuda no se encontró en:\n{video_path}")
+            return
+        
+        # Crear ventana modal
+        video_modal = ctk.CTkToplevel(self.parent)
+        video_modal.title("Ayuda - Configuración de Tiempos")
+        video_modal.geometry("800x600")
+        video_modal.resizable(True, True)
+        video_modal.grab_set()
+        
+        # Centrar el modal
+        window_width = 800
+        window_height = 600
+        screen_width = video_modal.winfo_screenwidth()
+        screen_height = video_modal.winfo_screenheight()
+        center_x = int(screen_width/2 - window_width/2)
+        center_y = int(screen_height/2 - window_height/2)
+        video_modal.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+        
+        # Frame principal
+        main_frame = ctk.CTkFrame(video_modal, fg_color="white")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Etiqueta para el video
+        video_label = ctk.CTkLabel(main_frame, text="")
+        video_label.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Botones de control
+        controls_frame = ctk.CTkFrame(main_frame, fg_color="white")
+        controls_frame.pack(fill="x", padx=10, pady=(0, 10))
+        
+        btn_play = ctk.CTkButton(
+            controls_frame,
+            text="▶ Reproducir",
+            command=self.play_video,
+            width=100
+        )
+        btn_play.pack(side="left", padx=5)
+        
+        btn_pause = ctk.CTkButton(
+            controls_frame,
+            text="⏸ Pausar",
+            command=self.pause_video,
+            width=100
+        )
+        btn_pause.pack(side="left", padx=5)
+        
+        btn_stop = ctk.CTkButton(
+            controls_frame,
+            text="⏹ Detener",
+            command=self.stop_video,
+            width=100
+        )
+        btn_stop.pack(side="left", padx=5)
+        
+        # Inicializar video
+        cap = cv2.VideoCapture(video_path)
+        self.stop_video()
+        
+        # Configurar cierre
+        video_modal.protocol("WM_DELETE_WINDOW", self.on_video_closing)
+
+    def play_video(self):
+        global video_running, cap
+        if cap is None:
+            return
+        
+        video_running = True
+        self.update_video()
+
+    def pause_video(self):
+        global video_running
+        video_running = False
+
+    def stop_video(self):
+        global video_running, current_frame
+        video_running = False
+        current_frame = 0
+        if cap is not None:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, frame = cap.read()
+            if ret:
+                self.show_frame(frame)
+
+    def update_video(self):
+        global current_frame, video_running, cap
+        
+        if video_running and cap is not None:
+            ret, frame = cap.read()
+            current_frame += 1
+            
+            if ret:
+                self.show_frame(frame)
+                video_modal.after(30, self.update_video)
+            else:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                current_frame = 0
+                video_modal.after(30, self.update_video)
+
+    def show_frame(self, frame):
+        global video_label
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(frame)
+        
+        max_width = video_label.winfo_width() - 20
+        max_height = video_label.winfo_height() - 20
+        
+        if max_width <= 0 or max_height <= 0:
+            return
+            
+        ratio = min(max_width/img.width, max_height/img.height)
+        new_size = (int(img.width*ratio), int(img.height*ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+        
+        imgtk = ImageTk.PhotoImage(image=img)
+        video_label.configure(image=imgtk)
+        video_label.image = imgtk
+
+    def on_video_closing(self):
+        global cap, video_modal
+        if cap is not None:
+            cap.release()
+            cap = None
+        video_modal.destroy()
+        video_modal = None
 
     def cargar_configuracion_tiempos(self):
         """Carga las bombas existentes y sus tiempos de configuración"""
@@ -192,12 +368,10 @@ class ConfiguracionSistema(ctk.CTkFrame):
                     label.pack(pady=20)
                     return
                 
-        
                 for i, bomba in enumerate(bombas):
                     # Guardar datos de la bomba
                     self.bombas_data[bomba['id_actuador']] = bomba
                     
-                
                     frame_opcion = ctk.CTkFrame(
                         self.opciones_frame, 
                         fg_color=("gray90", "gray20"),
@@ -215,7 +389,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
                     )
                     label.pack(side="left", padx=10, pady=8)
                     
-                
                     entry = ctk.CTkEntry(
                         frame_opcion, 
                         width=100,
@@ -228,7 +401,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
                     entry.pack(side="right", padx=10, pady=8)
                     self.opciones[bomba['id_actuador']] = entry
                     
-                    
                     frame_recuadro = ctk.CTkFrame(
                         self.recuadros_frame,
                         width=200,
@@ -238,11 +410,9 @@ class ConfiguracionSistema(ctk.CTkFrame):
                         fg_color=("#EAF2FB", "#1C1F26")
                     )
 
-
                     frame_recuadro.grid(row=0, column=i, padx=5, pady=5, sticky="nsew")
                     self.recuadros_frame.grid_columnconfigure(i, weight=1)
                     
-            
                     ctk.CTkLabel(
                         frame_recuadro,
                         text=bomba['tipo_actuador'],
@@ -254,11 +424,10 @@ class ConfiguracionSistema(ctk.CTkFrame):
                         frame_recuadro,
                         text=f"{bomba['tencendido']} seg" if bomba['tencendido'] is not None else "N/A",
                         text_color="black",
-                        font=("Arial", 12)  # Antes era 14
+                        font=("Arial", 12)
                     )
                     valor_label.pack(pady=(0, 8))
 
-                    
                     self.recuadros_ultimos_datos[bomba['id_actuador']] = valor_label
 
                 save_button = ctk.CTkButton(
@@ -282,7 +451,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
                 db.close()
 
     def crear_recuadro_bomba(self, actuador):
-
         frame_bomba = ctk.CTkFrame(
             self.bombas_frame, 
             border_width=0, 
@@ -292,13 +460,11 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         frame_bomba.pack(pady=6, padx=5, fill="x")
 
-        
         frame_bomba.grid_columnconfigure(0, weight=3)
         frame_bomba.grid_columnconfigure(1, weight=2)
         frame_bomba.grid_columnconfigure(2, weight=1)
         frame_bomba.grid_rowconfigure(0, weight=1)
 
-        
         nombre_label = ctk.CTkLabel(
             frame_bomba, 
             text=actuador['tipo_actuador'],
@@ -307,7 +473,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         nombre_label.grid(row=0, column=0, padx=20, sticky="w")
 
-    
         estado_color = "#2ECC71" if actuador['estado'].lower() == "activo" else "#E74C3C"
         estado_text = f"Estado: {actuador['estado']}"
         estado_label = ctk.CTkLabel(
@@ -319,7 +484,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
         )
         estado_label.grid(row=0, column=1, padx=15, sticky="w")
 
-        
         toggle_button = ctk.CTkButton(
             frame_bomba, 
             text="Detalles", 
@@ -349,7 +513,7 @@ class ConfiguracionSistema(ctk.CTkFrame):
                         cursor.execute(query, (valor, id_actuador))
                         db.commit()
                         
-                        # Actualizar el recuadro corresp
+                        # Actualizar el recuadro correspondiente
                         if id_actuador in self.recuadros_ultimos_datos:
                             texto = f"{valor} seg" if valor is not None else "N/A"
                             self.recuadros_ultimos_datos[id_actuador].configure(text=texto)
@@ -386,7 +550,6 @@ class ConfiguracionSistema(ctk.CTkFrame):
         
         self.modal_abierto = True
         modal = Modal(self.parent, f"Detalles: {actuador['tipo_actuador']}", detalles)
-        # Configurar para que al cerrar el modal se resetee la variable
         modal.protocol("WM_DELETE_WINDOW", lambda: self.cerrar_modal(modal))
 
     def cerrar_modal(self, modal):
