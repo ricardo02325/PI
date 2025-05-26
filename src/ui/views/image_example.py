@@ -98,45 +98,107 @@ class LoginFrame(customtkinter.CTkFrame):
             database="sistema_hidroponico"
         )
         
-        # Frame principal centrado
-        self.main_frame = customtkinter.CTkFrame(self, fg_color="transparent")
+        # Cargar imagen de fondo
+        image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
+        try:
+            self.background_image = Image.open(os.path.join(image_path, "fondo.jpg"))
+            self.bg_image = customtkinter.CTkImage(
+                light_image=self.background_image,
+                dark_image=self.background_image,
+                size=(self.winfo_screenwidth(), self.winfo_screenheight())
+            )
+            self.bg_label = customtkinter.CTkLabel(self, image=self.bg_image, text="")
+            self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        except FileNotFoundError:
+            print("No se encontró la imagen de fondo")
+            self.configure(fg_color=("#f5f7fa", "#1a1a1a"))  # Fondo alternativo
+
+        # Configurar fuente moderna
+        try:
+            self.title_font = customtkinter.CTkFont(family="Montserrat", size=28, weight="bold")
+            self.welcome_font = customtkinter.CTkFont(family="Montserrat", size=20, weight="bold")
+            self.input_font = customtkinter.CTkFont(family="Montserrat", size=14)
+            self.button_font = customtkinter.CTkFont(family="Montserrat", size=16, weight="bold")
+        except:
+            # Fallback si Montserrat no está instalado
+            self.title_font = customtkinter.CTkFont(size=28, weight="bold")
+            self.welcome_font = customtkinter.CTkFont(size=20, weight="bold")
+            self.input_font = customtkinter.CTkFont(size=14)
+            self.button_font = customtkinter.CTkFont(size=16, weight="bold")
+
+        # Frame principal con transparencia
+        self.main_frame = customtkinter.CTkFrame(
+            self, 
+            fg_color=("white", "gray20"),  # Fondo semitransparente
+            border_width=0,
+            corner_radius=15,
+            bg_color="transparent"
+        )
         self.main_frame.place(relx=0.5, rely=0.5, anchor="center")
         
         # Logo o imagen decorativa
-        image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
-        self.logo_image = customtkinter.CTkImage(
-            light_image=Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")),
-            dark_image=Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")),
-            size=(120, 120)
+        try:
+            self.logo_image = customtkinter.CTkImage(
+                light_image=Image.open(os.path.join(image_path, "Arbol.png")),
+                dark_image=Image.open(os.path.join(image_path, "Arbol.png")),
+                size=(180, 180)
+            )
+            self.logo_label = customtkinter.CTkLabel(
+                self.main_frame, 
+                text="", 
+                image=self.logo_image,
+                compound="top"
+            )
+            self.logo_label.grid(row=0, column=0, columnspan=2, pady=(30, 10), padx=40)
+        except FileNotFoundError:
+            pass
+
+        # Texto de bienvenida con estilo moderno
+        self.welcome_label = customtkinter.CTkLabel(
+            self.main_frame,
+            text="BIENVENIDO",
+            font=self.welcome_font,
+            text_color=("#3a7ebf", "#1f538d"),
+            justify="center"
         )
+        self.welcome_label.grid(row=1, column=0, columnspan=2, pady=(0, 5), padx=40)
         
-        self.logo_label = customtkinter.CTkLabel(
-            self.main_frame, 
-            text="", 
-            image=self.logo_image
+        # Subtítulo
+        self.subtitle_label = customtkinter.CTkLabel(
+            self.main_frame,
+            text="Por favor ingrese sus credenciales",
+            font=self.input_font,
+            text_color=("#6c757d", "#adb5bd"),
+            justify="center"
         )
-        self.logo_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
+        self.subtitle_label.grid(row=2, column=0, columnspan=2, pady=(0, 30), padx=40)
         
-        # Título principal
+        # Título principal del sistema
         self.title_label = customtkinter.CTkLabel(
             self.main_frame,
             text="SISTEMA HIDROPÓNICO",
-            font=customtkinter.CTkFont(size=24, weight="bold"),
-            text_color=("#2b2b2b", "white")
+            font=self.title_font,
+            text_color=("#2b2b2b", "white"),
+            justify="center"
         )
-        self.title_label.grid(row=1, column=0, columnspan=2, pady=(0, 30))
+        self.title_label.grid(row=3, column=0, columnspan=2, pady=(0, 40), padx=40)
         
-        # Notebook (pestañas) con estilo moderno
+        # Notebook (pestañas) con estilo moderno y transparencia
         self.notebook = customtkinter.CTkTabview(
             self.main_frame,
             width=400,
-            segmented_button_fg_color=("#f0f0f0", "#3a3a3a"),
+            segmented_button_fg_color=("gray90", "gray20"),
             segmented_button_selected_color=("#3a7ebf", "#1f538d"),
             segmented_button_selected_hover_color=("#3a7ebf", "#1f538d"),
-            segmented_button_unselected_hover_color=("#e0e0e0", "#4a4a4a"),
-            text_color=("gray10", "gray90")
+            segmented_button_unselected_hover_color=("gray80", "gray30"),
+            text_color=("gray10", "gray90"),
+            corner_radius=10,
+            fg_color=("white", "gray20")
         )
-        self.notebook.grid(row=2, column=0, columnspan=2, pady=(0, 20))
+        self.notebook.grid(row=4, column=0, columnspan=2, pady=(0, 30), padx=40)
+        
+        # [El resto del código de las pestañas y campos de entrada permanece igual...]
+        # Solo asegúrate de usar self.input_font para los CTkEntry y self.button_font para los CTkButton
         
         # Pestaña de Login
         self.login_tab = self.notebook.add("INICIAR SESIÓN")
@@ -280,7 +342,7 @@ class LoginFrame(customtkinter.CTkFrame):
             return
         
         # Mostrar animación de carga
-        self.show_loading("Iniciando sesión...")
+        self.show_loading("Iniciando Sesión...")
         
         # Ejecutar en un hilo para no bloquear la interfaz
         threading.Thread(target=self._perform_login, args=(email, password), daemon=True).start()
@@ -498,6 +560,7 @@ class MainFrame(customtkinter.CTkFrame):
             corner_radius=10
         )
         self.logout_button.grid(row=7, column=0, sticky="ew", padx=20, pady=(0, 20))
+        
 
         # Frames principales
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")

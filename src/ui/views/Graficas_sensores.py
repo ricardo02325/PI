@@ -128,34 +128,6 @@ def obtener_datos():
         print(f"❌ Error de conexión: {err}")
         return None
 
-def abrir_ayuda():
-    """Abre una ventana emergente que reproduce un video de ayuda."""
-    ayuda = tk.Toplevel()
-    ayuda.title("Ayuda en Video")
-    ayuda.geometry("700x500")
-    ayuda.resizable(False, False)
-
-    label_video = tk.Label(ayuda)
-    label_video.pack()
-
-    cap = cv2.VideoCapture(VIDEO_PATH)
-
-    def reproducir():
-        ret, frame = cap.read()
-        if ret:
-            frame = cv2.resize(frame, (700, 500))
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            imagen = Image.fromarray(frame)
-            imgtk = ImageTk.PhotoImage(image=imagen)
-            label_video.imgtk = imgtk
-            label_video.configure(image=imgtk)
-            ayuda.after(33, reproducir)
-        else:
-            cap.release()
-            ayuda.destroy()
-
-    reproducir()
-
 def mostrar_graficas(frame_destino):
     """Muestra las gráficas en el frame especificado"""
     global canvas, axes, fig, graphs_container
@@ -612,19 +584,6 @@ def iniciar_graficas(frame):
         text_color="#2c3e50"
     )
     bienvenido_label.pack(side="left", padx=(20, 0))
-    
-    # Botón de ayuda
-    boton_ayuda = ctk.CTkButton(
-        encabezado_frame,
-        text="Ayuda",
-        width=80,
-        height=30,
-        font=("Montserrat", 12, "bold"),
-        fg_color="#3498db",
-        hover_color="#2980b9",
-        command=abrir_ayuda
-    )
-    boton_ayuda.pack(side="right", padx=20)
     
     # --- CONTENEDOR PRINCIPAL ---
     main_container = ctk.CTkFrame(frame, fg_color="transparent")

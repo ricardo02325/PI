@@ -2,60 +2,58 @@ import customtkinter as ctk
 from datetime import datetime
 
 class Notificador:
-    def __init__(self, parent_frame):
-        self.parent = parent_frame
+    def __init__(self, root):
+        self.parent = root
         self.nuevas_alertas = []
         self.panel_visible = False
 
-        # Contenedor superior derecho
-        self.frame_superior = ctk.CTkFrame(self.parent, fg_color="transparent")
-        self.frame_superior.place(relx=1.0, rely=0.0, anchor="ne", x=-20, y=20)
-
-        # Botón de campanita con diseño moderno
-        self.btn_campana = ctk.CTkButton(
-            self.frame_superior,
+        # Botón de notificación usando CTkLabel (más control visual)
+        self.btn_campana = ctk.CTkLabel(
+            master=self.parent,
             text="🔔",
             width=45,
             height=45,
-            fg_color="#E0E0E0",
-            hover_color="#D32F2F",
-            corner_radius=100,
-            font=('Arial', 20, 'bold'),
-            text_color="black",
-            border_width=0,
-            command=self.toggle_panel
+            font=("Arial", 20),
+            fg_color="#FFFFFF",       # Fondo blanco
+            text_color="#212121",     # Color del texto (icono)
+            corner_radius=100,        # Hacemos el label completamente redondo
+            cursor="hand2"           # Cambia el cursor al pasar por encima
         )
-        self.btn_campana.pack()
+        self.btn_campana.place(relx=1.0, rely=0.0, x=-20, y=20, anchor="ne")
+        
+        # Configuramos los eventos para simular un botón
+        self.btn_campana.bind("<Button-1>", lambda e: self.toggle_panel())
+        self.btn_campana.bind("<Enter>", lambda e: self.btn_campana.configure(fg_color="#E0E0E0"))  # Gris claro al pasar el mouse
+        self.btn_campana.bind("<Leave>", lambda e: self.btn_campana.configure(fg_color="#FFFFFF"))  # Vuelve a blanco al salir
 
         # Panel de notificaciones
         self.panel = ctk.CTkFrame(
-            self.parent,
+            master=self.parent,
             width=350,
             height=250,
             corner_radius=15,
-            fg_color="#FFFFFF",
+            fg_color="#ffffff",
             border_width=1,
             border_color="#BDBDBD"
         )
-
         self.contenido_panel = ctk.CTkScrollableFrame(self.panel, fg_color="transparent")
         self.contenido_panel.pack(fill="both", expand=True, padx=10, pady=10)
 
-    def toggle_panel(self):
+    def toggle_panel(self, event=None):
         if self.panel_visible:
             self.panel.place_forget()
             self.panel_visible = False
         else:
             self.actualizar_panel()
-            self.panel.place(relx=1.0, rely=0.0, anchor="ne", x=-90, y=80)
+            self.panel.place(relx=1.0, rely=0.0, x=-20, y=75, anchor="ne")
             self.panel_visible = True
-            self.btn_campana.configure(fg_color="#E0E0E0")
+            self.btn_campana.configure(fg_color="#FFFFFF")  # Restablecer fondo blanco
             self.nuevas_alertas.clear()
 
     def recibir_alerta(self, mensaje):
         ahora = datetime.now().strftime("%H:%M:%S")
         self.nuevas_alertas.append((mensaje, ahora))
-        self.btn_campana.configure(fg_color="#D32F2F")  # rojo fuerte
+        self.btn_campana.configure(fg_color="#FFEB3B")  # Amarillo al recibir alerta
         self.actualizar_panel()
 
     def actualizar_panel(self):
@@ -86,6 +84,14 @@ class Notificador:
                 )
                 texto.pack(fill="both", padx=10, pady=6)
 
-# Ejemplo de uso (en tu app principal):
-# notificador = Notificador(self)
-# notificador.recibir_alerta("Nueva alerta de pH detectada")
+# Ejemplo de uso
+if __name__ == "__main__":
+    root = ctk.CTk()
+    root.geometry("800x600")
+    
+    notificador = Notificador(root)
+    
+    # Ejemplo: agregar una notificación después de 2 segundos
+    root.after(2000, lambda: notificador.recibir_alerta("Esta es una notificación de prueba"))
+    
+    root.mainloop()
