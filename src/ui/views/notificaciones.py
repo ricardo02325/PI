@@ -1,86 +1,97 @@
-import sqlite3
-import json
-from notifypy import Notify
-import os
+import customtkinter as ctk
+from datetime import datetime
+from PIL import Image
 
-# 1. Conectar a la base de datos
-conn = sqlite3.connect("C:")
-cursor = conn.cursor()
 
-# 2. Obtener el último valor de conductividad
-cursor.execute("SELECT conductividad FROM mediciones ORDER BY id DESC LIMIT 1")
-resultado = cursor.fetchone()
+class Notificador:
+    def __init__(self, parent_frame):
+        self.parent = parent_frame
+        self.nuevas_alertas = []
+        self.panel_visible = False
 
-if resultado:
-    conductividad = resultado[0]
-    print(f"Conductividad actual: {conductividad}")
+        # Imagen de campanita reducida
+        self.img_campana = ctk.CTkImage(
+            light_image=Image.open(r"C:\Users\Colibecas\Desktop\PI\src\ui\views\test_images\campana.png"),
+            size=(22, 22)
+        )
 
-    # 3. Verificar si supera el límite
-    if conductividad > 1000:  # Ajusta este valor al límite que desees
-        notification = Notify()
-        notification.title = "⚠️ Alerta de Conductividad"
-        notification.message = f"La conductividad eléctrica es muy alta: {conductividad}"
-        notification.audio = "C:\\Users\\Colibecas\\Desktop\\PI\\src\\ui\\views\\sonido_alertas.wav"
-        notification.icon = "C:\\Users\\Colibecas\\Desktop\\PI\\src\\ui\\views\\test_images\\noti.png"
-        notification.send()
+        # Botón rectangular con campanita
+        self.btn_campana = ctk.CTkButton(
+            self.parent,
+            image=self.img_campana,
+            text="",
+            width=40,
+            height=30,
+            fg_color="#FFDB6F",
+            hover_color="#FFCA28",
+            corner_radius=5,
+            border_width=0,
+            command=self.toggle_panel
+        )
 
-# 4. Cerrar la conexión
-conn.close()
+        # Posicionar en la esquina superior derecha
+        self.btn_campana.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=30)
 
-def verificar_notificaciones():
-    base_path = os.path.dirname(__file__)
-    json_file = os.path.join(base_path, "notificados.json")
+        # Panel de notificaciones
+        self.panel = ctk.CTkFrame(
+            self.parent,
+            width=350,
+            height=250,
+            corner_radius=15,
+            fg_color="#FFFFFF",
+            border_width=1,
+            border_color="#BDBDBD"
+        )
 
-    # Verificar si el archivo existe
-    if not os.path.exists(json_file):
-        print("El archivo JSON no existe.")
-        return
+        # Contenido scrollable dentro del panel
+        self.contenido_panel = ctk.CTkScrollableFrame(self.panel, fg_color="transparent")
+        self.contenido_panel.pack(fill="both", expand=True, padx=10, pady=10)
 
-    with open(json_file, "r") as file:
-        notificados = json.load(file)
+    def toggle_panel(self):
+        if self.panel_visible:
+            self.panel.place_forget()
+            self.panel_visible = False
+        else:
+            self.actualizar_panel()
+            self.panel.place(relx=1.0, rely=0.0, anchor="ne", x=-90, y=80)
+            self.panel_visible = True
 
-    alguna_noti = False
+        # Restaurar color normal al abrir/cerrar el panel
+        self.btn_campana.configure(fg_color="#FFDB6F")
+        self.nuevas_alertas.clear()
 
-    # Iterar sobre grupos y registros dentro de cada grupo
-    for grupo_id, alertas in notificados.items():
-        for alerta_id, registro in alertas.items():
-            if not registro.get("notify", False):  # Si no ha sido notificado
-                print(f"🔔 Enviando notificación del grupo {grupo_id} para ID {registro['id']}")
+    def recibir_alerta(self, mensaje):
+        ahora = datetime.now().strftime("%H:%M:%S")
+        self.nuevas_alertas.append((mensaje, ahora))
+        # Cambiar color del botón a rojo cuando hay alerta
+        self.btn_campana.configure(fg_color="#D32F2F")
+        self.actualizar_panel()
 
-                # Configurar notificación
-                notification = Notify()
-                notification.title = f"Alerta {registro.get('priority', 'Sin prioridad')}"
-                notification.audio = os.path.join(base_path, "sonido_alertas.wav")
+    def actualizar_panel(self):
+        # Limpiar notificaciones previas
+        for widget in self.contenido_panel.winfo_children():
+            widget.destroy()
 
-                # Definir ícono según su prioridad
-                priority = registro.get("priority", "Baja")
+        if not self.nuevas_alertas:
+            mensaje = ctk.CTkLabel(
+                self.contenido_panel,
+                text="Sin nuevas notificaciones",
+                font=("Arial", 13, "italic"),
+                text_color="#757575"
+            )
+            mensaje.pack(pady=5)
+        else:
+            for hora, msg in reversed(self.nuevas_alertas):
+                item = ctk.CTkFrame(self.contenido_panel, fg_color="#F5F5F5", corner_radius=10)
+                item.pack(fill="x", pady=5, padx=2)
 
-                if priority == "Alta":
-                    icon_file = "noti.2.png"
-                elif priority == "Media":
-                    icon_file = "noti.1.png"
-                else:
-                    icon_file = "noti.png"
-
-                icon_path = os.path.join(base_path, "ui", "assets", "views", "test_images", icon_file)
-
-                # Verificar si existe el ícono
-                if not os.path.exists(icon_path):
-                    icon_path = os.path.join(base_path, "ui", "assets", "views", "test_images", "noti.png")
-
-                notification.icon = icon_path
-
-                notification.message = f"{registro['message']} - {registro['datetime']}"
-                notification.send()
-
-                # Marcar como notificado
-                registro["notify"] = True
-                alguna_noti = True
-
-    # Guardar los cambios en el archivo JSON solo si hubo notificaciones
-    if alguna_noti:
-        with open(json_file, "w") as file:
-            json.dump(notificados, file, indent=4)
-
-# Ejecutar la función
-verificar_notificaciones()
+                texto = ctk.CTkLabel(
+                    item,
+                    text=f"{hora} {msg}",
+                    font=("Arial", 13),
+                    text_color="#212121",
+                    anchor="w",
+                    justify="left",
+                    wraplength=300
+                )
+                texto.pack(fill="both", padx=10, pady=6)
