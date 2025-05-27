@@ -756,7 +756,7 @@ def iniciar_graficas(frame):
         hover_color="#f0f0f0",
         command=lambda: print("Mostrar notificaciones")  # Aquí puedes añadir tu función de notificaciones
     )
-    btn_notificaciones.pack(side="left", padx=5)
+    btn_notificaciones.pack(side="left", padx=60)
     
     # --- CONTENEDOR PRINCIPAL ---
     main_container = ctk.CTkFrame(frame, fg_color="transparent")

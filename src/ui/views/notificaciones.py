@@ -1,62 +1,74 @@
 import customtkinter as ctk
 from datetime import datetime
+from PIL import Image
+
 
 class Notificador:
-    def __init__(self, root):
-        self.parent = root
+    def __init__(self, parent_frame):
+        self.parent = parent_frame
         self.nuevas_alertas = []
         self.panel_visible = False
 
-        # Botón de notificación usando CTkLabel (más control visual)
-        self.btn_campana = ctk.CTkLabel(
-            master=self.parent,
-            text="🔔",
-            width=45,
-            height=45,
-            font=("Arial", 20),
-            fg_color="#FFFFFF",       # Fondo blanco
-            text_color="#212121",     # Color del texto (icono)
-            corner_radius=100,        # Hacemos el label completamente redondo
-            cursor="hand2"           # Cambia el cursor al pasar por encima
+        # Imagen de campanita reducida
+        self.img_campana = ctk.CTkImage(
+            light_image=Image.open(r"C:\Users\Colibecas\Escritorio\PI\src\ui\views\test_images\campana.png"),
+            size=(22, 22)
         )
-        self.btn_campana.place(relx=1.0, rely=0.0, x=-20, y=20, anchor="ne")
-        
-        # Configuramos los eventos para simular un botón
-        self.btn_campana.bind("<Button-1>", lambda e: self.toggle_panel())
-        self.btn_campana.bind("<Enter>", lambda e: self.btn_campana.configure(fg_color="#E0E0E0"))  # Gris claro al pasar el mouse
-        self.btn_campana.bind("<Leave>", lambda e: self.btn_campana.configure(fg_color="#FFFFFF"))  # Vuelve a blanco al salir
+
+        # Botón rectangular con campanita
+        self.btn_campana = ctk.CTkButton(
+            self.parent,
+            image=self.img_campana,
+            text="",
+            width=40,
+            height=30,
+            fg_color="#FFDB6F",
+            hover_color="#FFCA28",
+            corner_radius=5,
+            border_width=0,
+            command=self.toggle_panel
+        )
+
+        # Posicionar en la esquina superior derecha
+        self.btn_campana.place(relx=1.0, rely=0.0, anchor="ne", x=-30, y=30)
 
         # Panel de notificaciones
         self.panel = ctk.CTkFrame(
-            master=self.parent,
+            self.parent,
             width=350,
             height=250,
             corner_radius=15,
-            fg_color="#ffffff",
+            fg_color="#FFFFFF",
             border_width=1,
             border_color="#BDBDBD"
         )
+
+        # Contenido scrollable dentro del panel
         self.contenido_panel = ctk.CTkScrollableFrame(self.panel, fg_color="transparent")
         self.contenido_panel.pack(fill="both", expand=True, padx=10, pady=10)
 
-    def toggle_panel(self, event=None):
+    def toggle_panel(self):
         if self.panel_visible:
             self.panel.place_forget()
             self.panel_visible = False
         else:
             self.actualizar_panel()
-            self.panel.place(relx=1.0, rely=0.0, x=-20, y=75, anchor="ne")
+            self.panel.place(relx=1.0, rely=0.0, anchor="ne", x=-90, y=80)
             self.panel_visible = True
-            self.btn_campana.configure(fg_color="#FFFFFF")  # Restablecer fondo blanco
-            self.nuevas_alertas.clear()
+
+        # Restaurar color normal al abrir/cerrar el panel
+        self.btn_campana.configure(fg_color="#FFDB6F")
+        self.nuevas_alertas.clear()
 
     def recibir_alerta(self, mensaje):
         ahora = datetime.now().strftime("%H:%M:%S")
         self.nuevas_alertas.append((mensaje, ahora))
-        self.btn_campana.configure(fg_color="#FFEB3B")  # Amarillo al recibir alerta
+        # Cambiar color del botón a rojo cuando hay alerta
+        self.btn_campana.configure(fg_color="#D32F2F")
         self.actualizar_panel()
 
     def actualizar_panel(self):
+        # Limpiar notificaciones previas
         for widget in self.contenido_panel.winfo_children():
             widget.destroy()
 
@@ -69,13 +81,13 @@ class Notificador:
             )
             mensaje.pack(pady=5)
         else:
-            for msg, hora in reversed(self.nuevas_alertas):
+            for hora, msg in reversed(self.nuevas_alertas):
                 item = ctk.CTkFrame(self.contenido_panel, fg_color="#F5F5F5", corner_radius=10)
                 item.pack(fill="x", pady=5, padx=2)
 
                 texto = ctk.CTkLabel(
                     item,
-                    text=f"[{hora}] {msg}",
+                    text=f"{hora} {msg}",
                     font=("Arial", 13),
                     text_color="#212121",
                     anchor="w",
@@ -83,15 +95,3 @@ class Notificador:
                     wraplength=300
                 )
                 texto.pack(fill="both", padx=10, pady=6)
-
-# Ejemplo de uso
-if __name__ == "__main__":
-    root = ctk.CTk()
-    root.geometry("800x600")
-    
-    notificador = Notificador(root)
-    
-    # Ejemplo: agregar una notificación después de 2 segundos
-    root.after(2000, lambda: notificador.recibir_alerta("Esta es una notificación de prueba"))
-    
-    root.mainloop()

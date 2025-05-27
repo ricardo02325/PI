@@ -572,14 +572,15 @@ class MainFrame(customtkinter.CTkFrame):
     
     def comprobar_notificaciones(self):
         alertas_actuales = obtener_alertas_completas()
-        
         for alerta in alertas_actuales:
             id_alerta = alerta.get("id_alerta")
             if id_alerta not in self.ids_alertas_vistas:
-                mensaje = f"⚠️ {alerta.get('tipo_alerta', 'Alerta')} - {alerta.get('descripcion', '')}"
+                descripcion = alerta.get("descripcion", "")
+            if len(descripcion) > 100:
+                descripcion = descripcion[:100] + "..."  # O divide en varias líneas
+                mensaje = f"⚠️ {alerta.get('tipo_alerta', 'Alerta')}:\n{descripcion}"
                 self.notificador.recibir_alerta(mensaje)
                 self.ids_alertas_vistas.add(id_alerta)
-        
         self.after(20000, self.comprobar_notificaciones)
     
     def create_nav_button(self, text, image, command, row):

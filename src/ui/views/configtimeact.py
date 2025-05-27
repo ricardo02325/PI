@@ -74,44 +74,47 @@ class ConfiguracionSistema(ctk.CTkFrame):
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        # Header frame con título y botones
-        self.header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        # Header frame con título y botones (nueva estructura)
+        self.header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent", height=80)
         self.header_frame.pack(fill="x", pady=(0, 20))
-        self.header_frame.grid_columnconfigure(0, weight=1)
-
+        
+        # Frame para el título (ocupará la mayor parte del espacio)
+        self.title_frame = ctk.CTkFrame(self.header_frame, fg_color="transparent")
+        self.title_frame.pack(side="left", fill="both", expand=True)
+        
         # Título principal
         self.titulo_principal = ctk.CTkLabel(
-            self.header_frame,
+            self.title_frame,
             text="⚙ CONFIGURACION GENERAL",
             font=("Arial", 24, "bold"),
-            anchor="center"
+            anchor="w"
         )
-        self.titulo_principal.grid(row=0, column=0, padx=10, sticky="nsew")
+        self.titulo_principal.pack(side="left", padx=(20, 0))
 
-        # Frame para botones de ayuda y notificaciones
+        # Frame para botones de ayuda y notificaciones (a la derecha)
         self.buttons_frame = ctk.CTkFrame(self.header_frame, fg_color="transparent")
-        self.buttons_frame.grid(row=0, column=1, sticky="e")
-
-        # Botón de ayuda para video
+        self.buttons_frame.pack(side="right", padx=10)
+        
+        # Botón de ayuda (estilo consistente)
         self.btn_ayuda = ctk.CTkButton(
             self.buttons_frame,
             text="?",
             width=30,
             height=30,
-            font=("Arial", 14, "bold"),
+            font=("Montserrat", 14, "bold"),
             fg_color="#3498db",
             hover_color="#2980b9",
             command=self.mostrar_ayuda_config
         )
         self.btn_ayuda.pack(side="left", padx=5)
 
-        # Botón de notificaciones
+        # Botón de notificaciones (opcional, estilo consistente)
         self.btn_notificaciones = ctk.CTkButton(
             self.buttons_frame,
             text="🔔",
             width=30,
             height=30,
-            font=("Arial", 14),
+            font=("Montserrat", 14),
             fg_color="transparent",
             hover_color="#f0f0f0",
             command=lambda: print("Mostrar notificaciones")

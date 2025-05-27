@@ -4,10 +4,6 @@ import customtkinter as ctk
 from tkinter import ttk
 from datetime import datetime
 import threading
-import cv2
-from PIL import Image, ImageTk
-import tkinter as tk
-from tkinter import ttk
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
@@ -41,163 +37,6 @@ class AlertasApp:
         self.alertas = []
         self.inicializar_ui()
         self.iniciar_actualizaciones_periodicas()
-        
-         # Añadir botón de ayuda en el frame principal
-        self.agregar_boton_ayuda()
-
-    def agregar_boton_ayuda(self):
-        # Frame para contener los botones de ayuda y notificaciones
-        botones_frame = ctk.CTkFrame(self.frame_titulo, fg_color="transparent")
-        botones_frame.pack(side="right", padx=10)
-        
-        # Botón de ayuda
-        btn_ayuda = ctk.CTkButton(
-            botones_frame,
-            text="?",
-            width=30,
-            height=30,
-            font=("Arial", 14, "bold"),
-            fg_color="#3498db",
-            hover_color="#2980b9",
-            command=self.mostrar_ayuda_alertas
-        )
-        btn_ayuda.pack(side="left", padx=5)
-
-    def mostrar_ayuda_alertas(self):
-        """Muestra el video de ayuda para el módulo de alertas"""
-        # Construir la ruta absoluta al video
-        video_path = os.path.join("C:\\", "Users", "Colibecas", "Escritorio", "PI", "src", "ui", "views", "test_images", "Alertas.mp4")
-        
-        # Verificar si el archivo existe
-        if not os.path.exists(video_path):
-            tk.messagebox.showerror("Error", f"El archivo de ayuda no se encontró en:\n{video_path}")
-            return
-        
-        # Crear ventana modal
-        modal = ctk.CTkToplevel(self.frame)
-        modal.title("Ayuda - Manejo de Alertas")
-        modal.geometry("800x600")
-        modal.resizable(True, True)
-        modal.grab_set()  # Hace que sea modal
-        
-        # Centrar el modal en la pantalla
-        window_width = 800
-        window_height = 600
-        screen_width = modal.winfo_screenwidth()
-        screen_height = modal.winfo_screenheight()
-        center_x = int(screen_width/2 - window_width/2)
-        center_y = int(screen_height/2 - window_height/2)
-        modal.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
-        
-        # Frame principal del modal
-        main_frame = ctk.CTkFrame(modal, fg_color="white")
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # Etiqueta para el video
-        video_label = ctk.CTkLabel(main_frame, text="")
-        video_label.pack(fill="both", expand=True, padx=10, pady=10)
-        
-        # Botones de control
-        controls_frame = ctk.CTkFrame(main_frame, fg_color="white")
-        controls_frame.pack(fill="x", padx=10, pady=(0, 10))
-        
-        btn_play = ctk.CTkButton(
-            controls_frame,
-            text="▶ Reproducir",
-            command=lambda: self.play_video(),
-            width=100
-        )
-        btn_play.pack(side="left", padx=5)
-        
-        btn_pause = ctk.CTkButton(
-            controls_frame,
-            text="⏸ Pausar",
-            command=lambda: self.pause_video(),
-            width=100
-        )
-        btn_pause.pack(side="left", padx=5)
-        
-        btn_stop = ctk.CTkButton(
-            controls_frame,
-            text="⏹ Detener",
-            command=lambda: self.stop_video(),
-            width=100
-        )
-        btn_stop.pack(side="left", padx=5)
-        
-        # Variables de control del video
-        self.cap = None
-        self.video_running = False
-        self.current_frame = 0
-        self.video_path = video_path
-        self.video_modal = modal
-        self.video_label = video_label
-        
-        # Mostrar el primer frame
-        self.stop_video()
-        
-        # Configurar el cierre del modal
-        modal.protocol("WM_DELETE_WINDOW", self.on_video_closing)
-
-    def play_video(self):
-        if self.cap is None:
-            self.cap = cv2.VideoCapture(self.video_path)
-            self.current_frame = 0
-        
-        self.video_running = True
-        self.update_video()
-
-    def pause_video(self):
-        self.video_running = False
-
-    def stop_video(self):
-        self.video_running = False
-        self.current_frame = 0
-        if self.cap is not None:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, frame = self.cap.read()
-            if ret:
-                self.show_frame(frame)
-
-    def update_video(self):
-        if self.video_running and self.cap is not None:
-            ret, frame = self.cap.read()
-            self.current_frame += 1
-            
-            if ret:
-                self.show_frame(frame)
-                self.video_modal.after(30, self.update_video)
-            else:
-                # Si llegamos al final, reiniciamos
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                self.current_frame = 0
-                self.video_modal.after(30, self.update_video)
-
-    def show_frame(self, frame):
-        # Convertir el frame de OpenCV a formato compatible con tkinter
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame)
-        
-        # Redimensionar manteniendo el aspect ratio
-        max_width = self.video_label.winfo_width() - 20
-        max_height = self.video_label.winfo_height() - 20
-        
-        if max_width <= 0 or max_height <= 0:
-            return
-            
-        ratio = min(max_width/img.width, max_height/img.height)
-        new_size = (int(img.width*ratio), int(img.height*ratio))
-        img = img.resize(new_size, Image.LANCZOS)
-        
-        imgtk = ImageTk.PhotoImage(image=img)
-        self.video_label.configure(image=imgtk)
-        self.video_label.image = imgtk  # Mantener referencia
-
-    def on_video_closing(self):
-        if self.cap is not None:
-            self.cap.release()
-            self.cap = None
-        self.video_modal.destroy()
 
     def inicializar_ui(self):
         for widget in self.frame.winfo_children():
@@ -210,7 +49,7 @@ class AlertasApp:
 
     def configurar_estructura_principal(self):
         self.frame_titulo = ctk.CTkFrame(self.frame, fg_color="#E3F2FD")
-        self.frame_titulo.pack(pady=(20, 10), fill="x")
+        self.frame_titulo.pack(pady=(45, 10), fill="x")
         self.label_titulo = ctk.CTkLabel(
             self.frame_titulo, 
             text="🚨 Alertas 🚨", 
